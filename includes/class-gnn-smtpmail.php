@@ -90,6 +90,21 @@ class GNN_SMTPMail
             if (!empty($options['timeout'])) {
                 $phpmailer->Timeout = (int) $options['timeout'];
             }
+
+            // Enable debug mode for troubleshooting (0 = off, 1 = client, 2 = server)
+            $phpmailer->SMTPDebug = 0; // Set to 2 for debugging
+
+            // SSL/TLS options for better compatibility
+            $phpmailer->SMTPOptions = array(
+                'ssl' => array(
+                    'verify_peer' => true,
+                    'verify_peer_name' => true,
+                    'allow_self_signed' => false,
+                ),
+            );
+
+            // Keep connection alive
+            $phpmailer->SMTPKeepAlive = false;
         }
     }
 
