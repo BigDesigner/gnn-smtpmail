@@ -16,6 +16,11 @@ class GNN_SMTPMail
      */
     public function run()
     {
+        // Register Logger CPT on every page load
+        if (class_exists('GNN_SMTP_Logger')) {
+            add_action('init', array('GNN_SMTP_Logger', 'register_post_type'));
+        }
+
         add_action('phpmailer_init', array($this, 'configure_phpmailer'));
         add_action('wp_mail_failed', array($this, 'log_failed_email'));
         add_action('wp_mail_succeeded', array($this, 'log_sent_email'));
@@ -40,11 +45,6 @@ class GNN_SMTPMail
                 'smtp_secure' => 'tls',
                 'timeout' => 10,
             ));
-        }
-
-        // Register CPT for logging (no table creation needed)
-        if (class_exists('GNN_SMTP_Logger')) {
-            add_action('init', array('GNN_SMTP_Logger', 'register_post_type'));
         }
     }
 
