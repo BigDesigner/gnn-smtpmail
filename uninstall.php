@@ -3,13 +3,18 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
     exit;
 }
 
-global $wpdb;
-
-// Delete options
+// Delete plugin options
 delete_option('gnn_smtp_options');
 delete_site_option('gnn_smtp_options');
 
-// Drop logs table
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$table_name = $wpdb->prefix . 'gnn_smtp_logs';
-$wpdb->query("DROP TABLE IF EXISTS $table_name");
+// Delete all log posts using WordPress APIs (no direct DB queries)
+$logs = get_posts(array(
+    'post_type' => 'gnn_smtpmail_log',
+    'numberposts' => -1,
+    'post_status' => 'private',
+    'fields' => 'ids',
+));
+
+foreach ($logs as $log_id) {
+    wp_delete_post($log_id, true);
+}

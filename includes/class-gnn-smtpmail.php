@@ -42,9 +42,9 @@ class GNN_SMTPMail
             ));
         }
 
-        // Ensure Logger table exists
+        // Register CPT for logging (no table creation needed)
         if (class_exists('GNN_SMTP_Logger')) {
-            GNN_SMTP_Logger::create_table();
+            add_action('init', array('GNN_SMTP_Logger', 'register_post_type'));
         }
     }
 
@@ -110,7 +110,7 @@ class GNN_SMTPMail
         $subject = isset($data['subject']) ? $data['subject'] : 'unknown';
         $message = $error->get_error_message();
 
-        GNN_SMTP_Logger::insert(
+        GNN_SMTP_Logger::add(
             'smtp',
             $recipient,
             $subject,
@@ -134,7 +134,7 @@ class GNN_SMTPMail
         $recipient = isset($mail_data['to']) ? $mail_data['to'] : 'unknown';
         $subject = isset($mail_data['subject']) ? $mail_data['subject'] : '';
 
-        GNN_SMTP_Logger::insert(
+        GNN_SMTP_Logger::add(
             'smtp',
             $recipient,
             $subject,

@@ -86,9 +86,8 @@ class GNN_SMTPMail_Admin
             return;
         }
 
-        // Handle Save
+        // Handle Save (security checks are in save_settings())
         if (isset($_POST['gnn_smtp_save_settings'])) {
-            check_admin_referer(self::NONCE_ACTION);
             $this->save_settings();
             echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Settings saved.', 'gnn-smtpmail') . '</p></div>';
         }
@@ -192,28 +191,49 @@ class GNN_SMTPMail_Admin
     }
 
     /**
-     * Save settings helper.
+     * Save settings helper with security checks.
      */
     private function save_settings()
     {
-        // Nonce is verified in render_settings_page before calling this method. Individual fields are sanitized below.
-        $input = isset($_POST['gnn_smtp']) ? wp_unslash($_POST['gnn_smtp']) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        // Security checks MUST be in the same function where $_POST is read
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('You do not have permission to access this page.', 'gnn-smtpmail'));
+        }
+
+        if (!isset($_POST['_wpnonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['_wpnonce'])), self::NONCE_ACTION)) {
+            wp_die(esc_html__('Security check failed.', 'gnn-smtpmail'));
+        }
+
+        // Now safe to read $_POST
+        $input = isset($_POST['gnn_smtp']) && is_array($_POST['gnn_smtp']) ? wp_unslash($_POST['gnn_smtp']) : array();
         $existing = get_option(self::OPTION_NAME, array());
 
         $clean = array();
-        $clean['mailer'] = sanitize_text_field($input['mailer']);
-        $clean['from_email'] = sanitize_email($input['from_email']);
-        $clean['from_name'] = sanitize_text_field($input['from_name']);
-        $clean['smtp_host'] = sanitize_text_field($input['smtp_host']);
-        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- We prefer integer text_field for port, but it is explicitly cast to int just below.
-        $clean['smtp_port'] = (int) $input['smtp_port'];
-        $clean['smtp_secure'] = sanitize_text_field($input['smtp_secure']);
-        $clean['smtp_auth'] = isset($input['smtp_auth']) ? true : false;
-        $clean['smtp_user'] = sanitize_text_field($input['smtp_user']);
-        $clean['timeout'] = (int) $input['timeout'];
 
-        // Password handling
-        if (!empty($input['smtp_pass'])) {
+        // Mailer type
+        $clean['mailer'] = isset($input['mailer']) ? sanitize_text_field($input['mailer']) : 'smtp';
+
+        // Email settings
+        $clean['from_email'] = isset($input['from_email']) ? sanitize_email($input['from_email']) : '';
+        $clean['from_name'] = isset($input['from_name']) ? sanitize_text_field($input['from_name']) : '';
+
+        // SMTP settings
+        $clean['smtp_host'] = isset($input['smtp_host']) ? sanitize_text_field($input['smtp_host']) : '';
+        $clean['smtp_port'] = isset($input['smtp_port']) ? absint($input['smtp_port']) : 587;
+
+        // Validate smtp_secure with allowlist
+        $allowed_secure = array('', 'ssl', 'tls');
+        $smtp_secure = isset($input['smtp_secure']) ? sanitize_text_field($input['smtp_secure']) : 'tls';
+        $clean['smtp_secure'] = in_array($smtp_secure, $allowed_secure, true) ? $smtp_secure : 'tls';
+
+        // Boolean for auth
+        $clean['smtp_auth'] = !empty($input['smtp_auth']);
+
+        $clean['smtp_user'] = isset($input['smtp_user']) ? sanitize_text_field($input['smtp_user']) : '';
+        $clean['timeout'] = isset($input['timeout']) ? absint($input['timeout']) : 10;
+
+        // Password handling - only update if new password provided
+        if (isset($input['smtp_pass']) && !empty($input['smtp_pass'])) {
             $clean['smtp_pass'] = sanitize_text_field($input['smtp_pass']);
         } else {
             $clean['smtp_pass'] = isset($existing['smtp_pass']) ? $existing['smtp_pass'] : '';
