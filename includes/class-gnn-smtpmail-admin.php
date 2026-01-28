@@ -109,7 +109,7 @@ class GNN_SMTPMail_Admin
         <div class="wrap">
             <h1><?php esc_html_e('GNN SMTPMail Settings', 'gnn-smtpmail'); ?></h1>
             <form method="post" action="">
-                <?php wp_nonce_field(self::NONCE_ACTION); ?>
+                <?php wp_nonce_field('gnn_smtpmail_save_settings', 'gnn_smtpmail_nonce'); ?>
                 <table class="form-table">
                     <tr>
                         <th scope="row"><?php esc_html_e('Mailer Type', 'gnn-smtpmail'); ?></th>
@@ -195,46 +195,50 @@ class GNN_SMTPMail_Admin
      */
     private function save_settings()
     {
-        // Security checks MUST be in the same function where $_POST is read
+        // Security checks MUST be before ANY $_POST access
         if (!current_user_can('manage_options')) {
-            wp_die(esc_html__('You do not have permission to access this page.', 'gnn-smtpmail'));
+            return;
         }
 
-        if (!isset($_POST['_wpnonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['_wpnonce'])), self::NONCE_ACTION)) {
-            wp_die(esc_html__('Security check failed.', 'gnn-smtpmail'));
+        if (!isset($_POST['gnn_smtpmail_nonce'])) {
+            return;
         }
 
-        // Now safe to read $_POST
-        $input = isset($_POST['gnn_smtp']) && is_array($_POST['gnn_smtp']) ? wp_unslash($_POST['gnn_smtp']) : array();
+        check_admin_referer('gnn_smtpmail_save_settings', 'gnn_smtpmail_nonce');
+
+        // Now safe to read $_POST - read once and sanitize
+        $raw = isset($_POST['gnn_smtp']) && is_array($_POST['gnn_smtp']) ? wp_unslash($_POST['gnn_smtp']) : array();
+
+        // Bulk sanitize text fields
+        $input = array_map('sanitize_text_field', $raw);
+
         $existing = get_option(self::OPTION_NAME, array());
-
         $clean = array();
 
         // Mailer type
-        $clean['mailer'] = isset($input['mailer']) ? sanitize_text_field($input['mailer']) : 'smtp';
+        $clean['mailer'] = isset($input['mailer']) ? $input['mailer'] : 'smtp';
 
         // Email settings
-        $clean['from_email'] = isset($input['from_email']) ? sanitize_email($input['from_email']) : '';
-        $clean['from_name'] = isset($input['from_name']) ? sanitize_text_field($input['from_name']) : '';
+        $clean['from_email'] = isset($raw['from_email']) ? sanitize_email($raw['from_email']) : '';
+        $clean['from_name'] = isset($input['from_name']) ? $input['from_name'] : '';
 
         // SMTP settings
-        $clean['smtp_host'] = isset($input['smtp_host']) ? sanitize_text_field($input['smtp_host']) : '';
-        $clean['smtp_port'] = isset($input['smtp_port']) ? absint($input['smtp_port']) : 587;
+        $clean['smtp_host'] = isset($input['smtp_host']) ? $input['smtp_host'] : '';
+        $clean['smtp_port'] = isset($raw['smtp_port']) ? absint($raw['smtp_port']) : 587;
 
         // Validate smtp_secure with allowlist
-        $allowed_secure = array('', 'ssl', 'tls');
-        $smtp_secure = isset($input['smtp_secure']) ? sanitize_text_field($input['smtp_secure']) : 'tls';
-        $clean['smtp_secure'] = in_array($smtp_secure, $allowed_secure, true) ? $smtp_secure : 'tls';
+        $smtp_secure = isset($raw['smtp_secure']) ? $raw['smtp_secure'] : '';
+        $clean['smtp_secure'] = in_array($smtp_secure, array('', 'ssl', 'tls'), true) ? $smtp_secure : 'tls';
 
         // Boolean for auth
-        $clean['smtp_auth'] = !empty($input['smtp_auth']);
+        $clean['smtp_auth'] = !empty($raw['smtp_auth']) ? 1 : 0;
 
-        $clean['smtp_user'] = isset($input['smtp_user']) ? sanitize_text_field($input['smtp_user']) : '';
-        $clean['timeout'] = isset($input['timeout']) ? absint($input['timeout']) : 10;
+        $clean['smtp_user'] = isset($input['smtp_user']) ? $input['smtp_user'] : '';
+        $clean['timeout'] = isset($raw['timeout']) ? absint($raw['timeout']) : 10;
 
         // Password handling - only update if new password provided
-        if (isset($input['smtp_pass']) && !empty($input['smtp_pass'])) {
-            $clean['smtp_pass'] = sanitize_text_field($input['smtp_pass']);
+        if (isset($raw['smtp_pass']) && !empty($raw['smtp_pass'])) {
+            $clean['smtp_pass'] = sanitize_text_field($raw['smtp_pass']);
         } else {
             $clean['smtp_pass'] = isset($existing['smtp_pass']) ? $existing['smtp_pass'] : '';
         }

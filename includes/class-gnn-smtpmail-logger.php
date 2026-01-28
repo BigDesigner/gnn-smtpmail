@@ -94,13 +94,8 @@ class GNN_SMTP_Logger
         );
 
         if (!empty($status)) {
-            $args['meta_query'] = array(
-                array(
-                    'key' => 'gnn_status',
-                    'value' => sanitize_text_field($status),
-                    'compare' => '=',
-                ),
-            );
+            $args['meta_key'] = 'gnn_status';
+            $args['meta_value'] = sanitize_text_field($status);
         }
 
         $query = new WP_Query($args);
