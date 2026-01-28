@@ -68,7 +68,7 @@ class GNN_SMTPMail
 
         // 3. Set From address if valid
         if (!empty($options['from_email']) && is_email($options['from_email'])) {
-            $from_name = !empty($options['from_name']) ? $options['from_name'] : 'WordPress';
+            $from_name = !empty($options['from_name']) ? $options['from_name'] : __('WordPress', 'gnn-smtpmail');
             $phpmailer->setFrom($options['from_email'], $from_name);
             $phpmailer->Sender = $options['from_email']; // Return-Path
         }
@@ -139,7 +139,7 @@ class GNN_SMTPMail
             $recipient,
             $subject,
             'sent',
-            'Email sent successfully.',
+            __('Email sent successfully.', 'gnn-smtpmail'),
             $mail_data
         );
     }
