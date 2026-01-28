@@ -8,6 +8,8 @@
  * Author URI:  https://example.com
  * License:     GPL-2.0+
  * Text Domain: gnn-smtpmail
+ * Requires at least: 5.0
+ * Requires PHP: 7.2
  */
 
 if (!defined('ABSPATH')) {
