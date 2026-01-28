@@ -1,15 +1,17 @@
 <?php
 /**
  * Plugin Name: GNN SMTPMail
- * Plugin URI:  https://example.com/gnn-smtpmail
- * Description: A lightweight SMTP plugin for WordPress.
+ * Plugin URI:  https://github.com/BigDesigner/gnn-smtpmail
+ * Description: Send WordPress emails reliably via SMTP.
  * Version:     1.0.0
- * Author:      GNN Team
- * Author URI:  https://example.com
- * License:     GPL-2.0+
+ * Author:      BigDesigner
+ * Author URI:  https://github.com/BigDesigner
+ * License:     GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: gnn-smtpmail
+ * Domain Path: /languages
+ * Requires PHP: 7.4
  * Requires at least: 5.0
- * Requires PHP: 7.2
  */
 
 if (!defined('ABSPATH')) {
