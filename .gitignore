@@ -1,0 +1,29 @@
+# WordPress
+wp-config.php
+wp-content/uploads/
+wp-content/cache/
+wp-content/themes/
+wp-content/plugins/*
+!wp-content/plugins/gnn-smtpmail/
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+debug.log
+error.log
+
+# Node
+node_modules/
+package-lock.json
+
+# Composer
+vendor/
+composer.lock
