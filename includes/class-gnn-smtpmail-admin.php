@@ -205,6 +205,7 @@ class GNN_SMTPMail_Admin
         $clean['from_email'] = sanitize_email($input['from_email']);
         $clean['from_name'] = sanitize_text_field($input['from_name']);
         $clean['smtp_host'] = sanitize_text_field($input['smtp_host']);
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- We prefer integer text_field for port, but it is explicitly cast to int just below.
         $clean['smtp_port'] = (int) $input['smtp_port'];
         $clean['smtp_secure'] = sanitize_text_field($input['smtp_secure']);
         $clean['smtp_auth'] = isset($input['smtp_auth']) ? true : false;
@@ -235,10 +236,11 @@ class GNN_SMTPMail_Admin
         if (isset($_POST['gnn_smtp_send_test'])) {
             check_admin_referer(self::NONCE_ACTION);
 
-            $to = sanitize_email(wp_unslash($_POST['test_email']));
+            $to = isset($_POST['test_email']) ? sanitize_email(wp_unslash($_POST['test_email'])) : '';
 
             if (is_email($to)) {
                 $subject = __('GNN SMTPMail Test', 'gnn-smtpmail');
+                // translators: %s: Current time.
                 $message = '<h1>' . esc_html__('It Works!', 'gnn-smtpmail') . '</h1><p>' . esc_html__('This is a test email sent from GNN SMTPMail plugin.', 'gnn-smtpmail') . '</p><p>' . sprintf(esc_html__('Time: %s', 'gnn-smtpmail'), current_time('mysql')) . '</p>';
                 $headers = array('Content-Type: text/html; charset=UTF-8');
 
@@ -246,6 +248,7 @@ class GNN_SMTPMail_Admin
                 $sent = wp_mail($to, $subject, $message, $headers);
 
                 if ($sent) {
+                    // translators: %s: Recipient email address.
                     $result_msg = '<div class="notice notice-success is-dismissible"><p>' . sprintf(esc_html__('Test email sent successfully to %s.', 'gnn-smtpmail'), esc_html($to)) . '</p></div>';
                 } else {
                     $result_msg = '<div class="notice notice-error is-dismissible"><p>' . esc_html__('Failed to send test email. Check the logs for details.', 'gnn-smtpmail') . '</p></div>';
@@ -337,7 +340,10 @@ class GNN_SMTPMail_Admin
                 </div>
                 <div class="tablenav-pages">
                     <span class="displaying-num">
-                        <?php echo sprintf(esc_html__('%s items', 'gnn-smtpmail'), esc_html($logs['total'])); ?>
+                        <?php
+                        // translators: %s: Total number of items.
+                        echo sprintf(esc_html__('%s items', 'gnn-smtpmail'), esc_html($logs['total']));
+                        ?>
                     </span>
                     <?php
                     $page_links = paginate_links(array(
