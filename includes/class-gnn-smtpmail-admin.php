@@ -86,10 +86,26 @@ class GNN_SMTPMail_Admin
             return;
         }
 
+        $message = '';
+        $message_type = '';
+
         // Handle Save (security checks are in save_settings())
         if (isset($_POST['gnn_smtp_save_settings'])) {
-            $this->save_settings();
-            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Settings saved.', 'gnn-smtpmail') . '</p></div>';
+            $result = $this->save_settings();
+
+            if ($result === 'success') {
+                $message = esc_html__('Settings saved successfully.', 'gnn-smtpmail');
+                $message_type = 'success';
+            } elseif ($result === 'nonce_missing') {
+                $message = esc_html__('Security check failed: Nonce missing.', 'gnn-smtpmail');
+                $message_type = 'error';
+            } elseif ($result === 'nonce_invalid') {
+                $message = esc_html__('Security check failed: Invalid nonce.', 'gnn-smtpmail');
+                $message_type = 'error';
+            } elseif ($result === 'no_permission') {
+                $message = esc_html__('You do not have permission to save settings.', 'gnn-smtpmail');
+                $message_type = 'error';
+            }
         }
 
         $options = get_option(self::OPTION_NAME, array());
@@ -108,6 +124,13 @@ class GNN_SMTPMail_Admin
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('GNN SMTPMail Settings', 'gnn-smtpmail'); ?></h1>
+            
+            <?php if (!empty($message)): ?>
+                <div class="notice notice-<?php echo esc_attr($message_type); ?> is-dismissible">
+                    <p><?php echo esc_html($message); ?></p>
+                </div>
+            <?php endif; ?>
+            
             <form method="post" action="">
                 <?php wp_nonce_field('gnn_smtpmail_save_settings', 'gnn_smtpmail_nonce'); ?>
                 <table class="form-table">
@@ -192,19 +215,22 @@ class GNN_SMTPMail_Admin
 
     /**
      * Save settings helper with security checks.
+     * @return string Status code: 'success', 'no_permission', 'nonce_missing', or 'nonce_invalid'
      */
     private function save_settings()
     {
         // Security checks MUST be before ANY $_POST access
         if (!current_user_can('manage_options')) {
-            return;
+            return 'no_permission';
         }
 
         if (!isset($_POST['gnn_smtpmail_nonce'])) {
-            return;
+            return 'nonce_missing';
         }
 
-        check_admin_referer('gnn_smtpmail_save_settings', 'gnn_smtpmail_nonce');
+        if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['gnn_smtpmail_nonce'])), 'gnn_smtpmail_save_settings')) {
+            return 'nonce_invalid';
+        }
 
         // Now safe to read $_POST - read once and sanitize
         $raw = isset($_POST['gnn_smtp']) && is_array($_POST['gnn_smtp']) ? wp_unslash($_POST['gnn_smtp']) : array();
@@ -244,6 +270,8 @@ class GNN_SMTPMail_Admin
         }
 
         update_option(self::OPTION_NAME, $clean);
+
+        return 'success';
     }
 
     /**
