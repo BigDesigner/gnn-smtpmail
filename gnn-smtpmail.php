@@ -58,3 +58,12 @@ function gnn_smtp_init()
     }
 }
 add_action('plugins_loaded', 'gnn_smtp_init');
+
+/**
+ * Load Text Domain
+ */
+function gnn_smtp_load_textdomain()
+{
+    load_plugin_textdomain('gnn-smtpmail', false, dirname(plugin_basename(__FILE__)) . '/languages');
+}
+add_action('plugins_loaded', 'gnn_smtp_load_textdomain');

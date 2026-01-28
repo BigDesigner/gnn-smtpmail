@@ -3,78 +3,110 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-/**
- * Logger class using WordPress Custom Post Type (no direct DB queries).
- */
 class GNN_SMTP_Logger
 {
-    /**
-     * Custom post type name for logs.
-     */
-    const POST_TYPE = 'gnn_smtpmail_log';
 
     /**
-     * Register the custom post type for logs.
-     * Called on 'init' hook.
+     * Get the logger table name with prefix.
+     *
+     * @return string
      */
-    public static function register_post_type()
+    public static function get_table_name()
     {
-        register_post_type(self::POST_TYPE, array(
-            'labels' => array(
-                'name' => __('Email Logs', 'gnn-smtpmail'),
-                'singular_name' => __('Email Log', 'gnn-smtpmail'),
-            ),
-            'public' => false,
-            'show_ui' => false,
-            'show_in_menu' => false,
-            'supports' => array('title'),
-            'capability_type' => 'post',
-            'map_meta_cap' => true,
-        ));
+        global $wpdb;
+        return $wpdb->prefix . 'gnn_smtp_logs';
     }
 
     /**
-     * Add a new log entry using WordPress post and meta APIs.
-     *
-     * @param string       $channel   The sending channel (e.g., 'smtp', 'mail').
-     * @param string|array $recipient Recipient email(s).
-     * @param string       $subject   Email subject.
-     * @param string       $status    Status string (e.g., 'sent', 'failed').
-     * @param string       $message   Error message or debug info.
-     * @param array        $context   Additional context data.
-     * @return int|false Post ID on success, false on failure.
+     * Create the logs table during plugin activation.
      */
-    public static function add($channel, $recipient, $subject, $status, $message, $context = array())
+    public static function create_table()
     {
+        global $wpdb;
+
+        $table_name = self::get_table_name();
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE $table_name (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			channel varchar(50) NOT NULL DEFAULT 'smtp',
+			recipient text NOT NULL,
+			subject text NOT NULL,
+			status varchar(50) NOT NULL DEFAULT 'sent',
+			message longtext NOT NULL,
+			context longtext,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			PRIMARY KEY  (id),
+			KEY status (status)
+		) $charset_collate;";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta($sql);
+    }
+
+    /**
+     * Drop the logs table.
+     */
+    public static function drop_table()
+    {
+        global $wpdb;
+        $table_name = self::get_table_name();
+        $wpdb->query("DROP TABLE IF EXISTS $table_name");
+    }
+
+    /**
+     * Clear all log entries.
+     */
+    public static function clear_all()
+    {
+        global $wpdb;
+        $table_name = self::get_table_name();
+        $wpdb->query("TRUNCATE TABLE $table_name");
+    }
+
+    /**
+     * Insert a new log entry.
+     *
+     * @param string $channel   The sending channel (e.g., 'smtp', 'mail').
+     * @param string|array $recipient Recipient email(s).
+     * @param string $subject   Email subject.
+     * @param string $status    Status string (e.g., 'success', 'failed').
+     * @param string $message   Error message or debug info.
+     * @param array  $context   Additional context data.
+     * @return int|false The number of rows inserted, or false on error.
+     */
+    public static function insert($channel, $recipient, $subject, $status, $message, $context = array())
+    {
+        global $wpdb;
+        $table_name = self::get_table_name();
+
         $recipient_str = is_array($recipient) ? implode(', ', $recipient) : (string) $recipient;
 
-        $post_id = wp_insert_post(array(
-            'post_type' => self::POST_TYPE,
-            'post_status' => 'private',
-            'post_title' => sanitize_text_field($subject ? $subject : __('No Subject', 'gnn-smtpmail')),
-            'post_content' => sanitize_textarea_field($message),
-            'post_date' => current_time('mysql'),
-            'post_date_gmt' => current_time('mysql', 1),
-        ), true);
+        $data = array(
+            'channel' => $channel,
+            'recipient' => $recipient_str,
+            'subject' => $subject,
+            'status' => $status,
+            'message' => $message,
+            'context' => wp_json_encode($context),
+            'created_at' => current_time('mysql'),
+        );
 
-        if (is_wp_error($post_id) || !$post_id) {
-            return false;
-        }
+        $format = array(
+            '%s', // channel
+            '%s', // recipient
+            '%s', // subject
+            '%s', // status
+            '%s', // message
+            '%s', // context
+            '%s', // created_at
+        );
 
-        // Store structured data as post meta
-        update_post_meta($post_id, 'gnn_channel', sanitize_text_field($channel));
-        update_post_meta($post_id, 'gnn_recipient', sanitize_text_field($recipient_str));
-        update_post_meta($post_id, 'gnn_subject', sanitize_text_field($subject));
-        update_post_meta($post_id, 'gnn_status', sanitize_text_field($status));
-        update_post_meta($post_id, 'gnn_message', sanitize_textarea_field($message));
-        update_post_meta($post_id, 'gnn_context', wp_json_encode($context));
-        update_post_meta($post_id, 'gnn_created_at', current_time('mysql'));
-
-        return $post_id;
+        return $wpdb->insert($table_name, $data, $format);
     }
 
     /**
-     * Retrieve logs with pagination and filtering using WP_Query.
+     * Retrieve logs with pagination and filtering.
      *
      * @param int    $paged    Current page number.
      * @param int    $per_page Number of items per page.
@@ -83,67 +115,39 @@ class GNN_SMTP_Logger
      */
     public static function get_logs($paged = 1, $per_page = 20, $status = '')
     {
-        $args = array(
-            'post_type' => self::POST_TYPE,
-            'post_status' => 'private',
-            'posts_per_page' => $per_page,
-            'paged' => $paged,
-            'orderby' => 'date',
-            'order' => 'DESC',
-            'no_found_rows' => false,
-        );
+        global $wpdb;
+        $table_name = self::get_table_name();
+
+        $offset = ($paged - 1) * $per_page;
+        $where_clauses = array('1=1');
+        $query_args = array();
 
         if (!empty($status)) {
-            $args['meta_key'] = 'gnn_status';
-            $args['meta_value'] = sanitize_text_field($status);
+            $where_clauses[] = 'status = %s';
+            $query_args[] = $status;
         }
 
-        $query = new WP_Query($args);
-        $rows = array();
+        $where_sql = implode(' AND ', $where_clauses);
 
-        if ($query->have_posts()) {
-            while ($query->have_posts()) {
-                $query->the_post();
-                $post_id = get_the_ID();
-
-                $rows[] = (object) array(
-                    'id' => $post_id,
-                    'created_at' => get_post_meta($post_id, 'gnn_created_at', true),
-                    'status' => get_post_meta($post_id, 'gnn_status', true),
-                    'subject' => get_post_meta($post_id, 'gnn_subject', true),
-                    'recipient' => get_post_meta($post_id, 'gnn_recipient', true),
-                    'message' => get_post_meta($post_id, 'gnn_message', true),
-                    'channel' => get_post_meta($post_id, 'gnn_channel', true),
-                    'context' => get_post_meta($post_id, 'gnn_context', true),
-                );
-            }
-            wp_reset_postdata();
+        // Count total
+        $count_sql = "SELECT COUNT(*) FROM $table_name WHERE $where_sql";
+        if (!empty($query_args)) {
+            $total = $wpdb->get_var($wpdb->prepare($count_sql, $query_args));
+        } else {
+            $total = $wpdb->get_var($count_sql);
         }
 
-        $total = $query->found_posts;
-        $pages = $query->max_num_pages;
+        // Get rows
+        $sql = "SELECT * FROM $table_name WHERE $where_sql ORDER BY created_at DESC LIMIT %d OFFSET %d";
+        $query_args[] = $per_page;
+        $query_args[] = $offset;
+
+        $rows = $wpdb->get_results($wpdb->prepare($sql, $query_args));
 
         return array(
             'rows' => $rows,
-            'total' => $total,
-            'pages' => $pages,
+            'total' => (int) $total,
+            'pages' => ceil($total / $per_page),
         );
-    }
-
-    /**
-     * Clear all log entries using WordPress post deletion.
-     */
-    public static function clear_all()
-    {
-        $logs = get_posts(array(
-            'post_type' => self::POST_TYPE,
-            'numberposts' => -1,
-            'post_status' => 'private',
-            'fields' => 'ids',
-        ));
-
-        foreach ($logs as $log_id) {
-            wp_delete_post($log_id, true);
-        }
     }
 }

@@ -16,11 +16,6 @@ class GNN_SMTPMail
      */
     public function run()
     {
-        // Register Logger CPT on every page load
-        if (class_exists('GNN_SMTP_Logger')) {
-            add_action('init', array('GNN_SMTP_Logger', 'register_post_type'));
-        }
-
         add_action('phpmailer_init', array($this, 'configure_phpmailer'));
         add_action('wp_mail_failed', array($this, 'log_failed_email'));
         add_action('wp_mail_succeeded', array($this, 'log_sent_email'));
@@ -45,6 +40,11 @@ class GNN_SMTPMail
                 'smtp_secure' => 'tls',
                 'timeout' => 10,
             ));
+        }
+
+        // Ensure Logger table exists
+        if (class_exists('GNN_SMTP_Logger')) {
+            GNN_SMTP_Logger::create_table();
         }
     }
 
@@ -90,21 +90,6 @@ class GNN_SMTPMail
             if (!empty($options['timeout'])) {
                 $phpmailer->Timeout = (int) $options['timeout'];
             }
-
-            // Enable debug mode for troubleshooting (0 = off, 1 = client, 2 = server)
-            $phpmailer->SMTPDebug = 0; // Set to 2 for debugging
-
-            // SSL/TLS options for better compatibility
-            $phpmailer->SMTPOptions = array(
-                'ssl' => array(
-                    'verify_peer' => true,
-                    'verify_peer_name' => true,
-                    'allow_self_signed' => false,
-                ),
-            );
-
-            // Keep connection alive
-            $phpmailer->SMTPKeepAlive = false;
         }
     }
 
@@ -125,7 +110,7 @@ class GNN_SMTPMail
         $subject = isset($data['subject']) ? $data['subject'] : 'unknown';
         $message = $error->get_error_message();
 
-        GNN_SMTP_Logger::add(
+        GNN_SMTP_Logger::insert(
             'smtp',
             $recipient,
             $subject,
@@ -149,7 +134,7 @@ class GNN_SMTPMail
         $recipient = isset($mail_data['to']) ? $mail_data['to'] : 'unknown';
         $subject = isset($mail_data['subject']) ? $mail_data['subject'] : '';
 
-        GNN_SMTP_Logger::add(
+        GNN_SMTP_Logger::insert(
             'smtp',
             $recipient,
             $subject,

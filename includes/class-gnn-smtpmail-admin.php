@@ -32,7 +32,7 @@ class GNN_SMTPMail_Admin
      */
     public function register_settings()
     {
-        register_setting('gnn_smtp_settings_group', self::OPTION_NAME, array('sanitize_callback' => 'sanitize_text_field'));
+        register_setting('gnn_smtp_settings_group', self::OPTION_NAME);
     }
 
     /**
@@ -86,26 +86,11 @@ class GNN_SMTPMail_Admin
             return;
         }
 
-        $message = '';
-        $message_type = '';
-
-        // Handle Save (security checks are in save_settings())
+        // Handle Save
         if (isset($_POST['gnn_smtp_save_settings'])) {
-            $result = $this->save_settings();
-
-            if ($result === 'success') {
-                $message = esc_html__('Settings saved successfully.', 'gnn-smtpmail');
-                $message_type = 'success';
-            } elseif ($result === 'nonce_missing') {
-                $message = esc_html__('Security check failed: Nonce missing.', 'gnn-smtpmail');
-                $message_type = 'error';
-            } elseif ($result === 'nonce_invalid') {
-                $message = esc_html__('Security check failed: Invalid nonce.', 'gnn-smtpmail');
-                $message_type = 'error';
-            } elseif ($result === 'no_permission') {
-                $message = esc_html__('You do not have permission to save settings.', 'gnn-smtpmail');
-                $message_type = 'error';
-            }
+            check_admin_referer(self::NONCE_ACTION);
+            $this->save_settings();
+            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Settings saved.', 'gnn-smtpmail') . '</p></div>';
         }
 
         $options = get_option(self::OPTION_NAME, array());
@@ -124,26 +109,15 @@ class GNN_SMTPMail_Admin
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('GNN SMTPMail Settings', 'gnn-smtpmail'); ?></h1>
-            
-            <?php if (!empty($message)): ?>
-                <div class="notice notice-<?php echo esc_attr($message_type); ?> is-dismissible">
-                    <p><?php echo esc_html($message); ?></p>
-                </div>
-            <?php endif; ?>
-            
             <form method="post" action="">
-                <?php wp_nonce_field('gnn_smtpmail_save_settings', 'gnn_smtpmail_nonce'); ?>
+                <?php wp_nonce_field(self::NONCE_ACTION); ?>
                 <table class="form-table">
                     <tr>
                         <th scope="row"><?php esc_html_e('Mailer Type', 'gnn-smtpmail'); ?></th>
                         <td>
                             <select name="gnn_smtp[mailer]">
-                                <option value="smtp" <?php selected($mailer, 'smtp'); ?>>
-                                    <?php esc_html_e('SMTP', 'gnn-smtpmail'); ?>
-                                </option>
-                                <option value="mail" <?php selected($mailer, 'mail'); ?>>
-                                    <?php esc_html_e('Default (PHP mail)', 'gnn-smtpmail'); ?>
-                                </option>
+                                <option value="smtp" <?php selected($mailer, 'smtp'); ?>><?php esc_html_e('SMTP', 'gnn-smtpmail'); ?></option>
+                                <option value="mail" <?php selected($mailer, 'mail'); ?>><?php esc_html_e('Default (PHP mail)', 'gnn-smtpmail'); ?></option>
                             </select>
                         </td>
                     </tr>
@@ -171,9 +145,7 @@ class GNN_SMTPMail_Admin
                         <th scope="row"><?php esc_html_e('Encryption', 'gnn-smtpmail'); ?></th>
                         <td>
                             <select name="gnn_smtp[smtp_secure]">
-                                <option value="" <?php selected($smtp_secure, ''); ?>>
-                                    <?php esc_html_e('None', 'gnn-smtpmail'); ?>
-                                </option>
+                                <option value="" <?php selected($smtp_secure, ''); ?>><?php esc_html_e('None', 'gnn-smtpmail'); ?></option>
                                 <option value="ssl" <?php selected($smtp_secure, 'ssl'); ?>>SSL</option>
                                 <option value="tls" <?php selected($smtp_secure, 'tls'); ?>>TLS</option>
                             </select>
@@ -214,64 +186,32 @@ class GNN_SMTPMail_Admin
     }
 
     /**
-     * Save settings helper with security checks.
-     * @return string Status code: 'success', 'no_permission', 'nonce_missing', or 'nonce_invalid'
+     * Save settings helper.
      */
     private function save_settings()
     {
-        // Security checks MUST be before ANY $_POST access
-        if (!current_user_can('manage_options')) {
-            return 'no_permission';
-        }
-
-        if (!isset($_POST['gnn_smtpmail_nonce'])) {
-            return 'nonce_missing';
-        }
-
-        if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['gnn_smtpmail_nonce'])), 'gnn_smtpmail_save_settings')) {
-            return 'nonce_invalid';
-        }
-
-        // Now safe to read $_POST - read once and sanitize
-        $raw = isset($_POST['gnn_smtp']) && is_array($_POST['gnn_smtp']) ? wp_unslash($_POST['gnn_smtp']) : array();
-
-        // Bulk sanitize text fields
-        $input = array_map('sanitize_text_field', $raw);
-
+        $input = isset($_POST['gnn_smtp']) ? $_POST['gnn_smtp'] : array();
         $existing = get_option(self::OPTION_NAME, array());
+
         $clean = array();
+        $clean['mailer'] = sanitize_text_field($input['mailer']);
+        $clean['from_email'] = sanitize_email($input['from_email']);
+        $clean['from_name'] = sanitize_text_field($input['from_name']);
+        $clean['smtp_host'] = sanitize_text_field($input['smtp_host']);
+        $clean['smtp_port'] = (int) $input['smtp_port'];
+        $clean['smtp_secure'] = sanitize_text_field($input['smtp_secure']);
+        $clean['smtp_auth'] = isset($input['smtp_auth']) ? true : false;
+        $clean['smtp_user'] = sanitize_text_field($input['smtp_user']);
+        $clean['timeout'] = (int) $input['timeout'];
 
-        // Mailer type
-        $clean['mailer'] = isset($input['mailer']) ? $input['mailer'] : 'smtp';
-
-        // Email settings
-        $clean['from_email'] = isset($raw['from_email']) ? sanitize_email($raw['from_email']) : '';
-        $clean['from_name'] = isset($input['from_name']) ? $input['from_name'] : '';
-
-        // SMTP settings
-        $clean['smtp_host'] = isset($input['smtp_host']) ? $input['smtp_host'] : '';
-        $clean['smtp_port'] = isset($raw['smtp_port']) ? absint($raw['smtp_port']) : 587;
-
-        // Validate smtp_secure with allowlist
-        $smtp_secure = isset($raw['smtp_secure']) ? $raw['smtp_secure'] : '';
-        $clean['smtp_secure'] = in_array($smtp_secure, array('', 'ssl', 'tls'), true) ? $smtp_secure : 'tls';
-
-        // Boolean for auth
-        $clean['smtp_auth'] = !empty($raw['smtp_auth']) ? 1 : 0;
-
-        $clean['smtp_user'] = isset($input['smtp_user']) ? $input['smtp_user'] : '';
-        $clean['timeout'] = isset($raw['timeout']) ? absint($raw['timeout']) : 10;
-
-        // Password handling - only update if new password provided
-        if (isset($raw['smtp_pass']) && !empty($raw['smtp_pass'])) {
-            $clean['smtp_pass'] = sanitize_text_field($raw['smtp_pass']);
+        // Password handling
+        if (!empty($input['smtp_pass'])) {
+            $clean['smtp_pass'] = sanitize_text_field($input['smtp_pass']);
         } else {
             $clean['smtp_pass'] = isset($existing['smtp_pass']) ? $existing['smtp_pass'] : '';
         }
 
         update_option(self::OPTION_NAME, $clean);
-
-        return 'success';
     }
 
     /**
@@ -288,11 +228,10 @@ class GNN_SMTPMail_Admin
         if (isset($_POST['gnn_smtp_send_test'])) {
             check_admin_referer(self::NONCE_ACTION);
 
-            $to = isset($_POST['test_email']) ? sanitize_email(wp_unslash($_POST['test_email'])) : '';
+            $to = sanitize_email($_POST['test_email']);
 
             if (is_email($to)) {
                 $subject = __('GNN SMTPMail Test', 'gnn-smtpmail');
-                // translators: %s: Current time.
                 $message = '<h1>' . esc_html__('It Works!', 'gnn-smtpmail') . '</h1><p>' . esc_html__('This is a test email sent from GNN SMTPMail plugin.', 'gnn-smtpmail') . '</p><p>' . sprintf(esc_html__('Time: %s', 'gnn-smtpmail'), current_time('mysql')) . '</p>';
                 $headers = array('Content-Type: text/html; charset=UTF-8');
 
@@ -300,7 +239,6 @@ class GNN_SMTPMail_Admin
                 $sent = wp_mail($to, $subject, $message, $headers);
 
                 if ($sent) {
-                    // translators: %s: Recipient email address.
                     $result_msg = '<div class="notice notice-success is-dismissible"><p>' . sprintf(esc_html__('Test email sent successfully to %s.', 'gnn-smtpmail'), esc_html($to)) . '</p></div>';
                 } else {
                     $result_msg = '<div class="notice notice-error is-dismissible"><p>' . esc_html__('Failed to send test email. Check the logs for details.', 'gnn-smtpmail') . '</p></div>';
@@ -313,7 +251,7 @@ class GNN_SMTPMail_Admin
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('Send Test Email', 'gnn-smtpmail'); ?></h1>
-            <?php echo wp_kses_post($result_msg); ?>
+            <?php echo $result_msg; ?>
             <form method="post" action="">
                 <?php wp_nonce_field(self::NONCE_ACTION); ?>
                 <table class="form-table">
@@ -326,11 +264,11 @@ class GNN_SMTPMail_Admin
                         </td>
                     </tr>
                 </table>
-                <p class="submit">
-                    <input type="submit" name="gnn_smtp_send_test" class="button button-primary"
-                        value="<?php esc_attr_e('Send Test Email', 'gnn-smtpmail'); ?>">
-                </p>
-            </form>
+                 </table>
+                 <p class="submit">
+                     <input type="submit" name="gnn_smtp_send_test" class="button button-primary" value="<?php esc_attr_e('Send Test Email', 'gnn-smtpmail'); ?>">
+                 </p>
+             </form>
         </div>
         <?php
     }
@@ -355,7 +293,7 @@ class GNN_SMTPMail_Admin
 
         // Pagination & Filter
         $paged = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
-        $status = isset($_GET['status']) ? sanitize_text_field(wp_unslash($_GET['status'])) : '';
+        $status = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
         $per_page = 20;
 
         $logs = array('rows' => array(), 'total' => 0, 'pages' => 0);
@@ -368,8 +306,7 @@ class GNN_SMTPMail_Admin
             <h1 class="wp-heading-inline"><?php esc_html_e('Email Logs', 'gnn-smtpmail'); ?></h1>
             <form method="post" action="" style="display:inline-block; float:right;">
                 <?php wp_nonce_field(self::NONCE_ACTION); ?>
-                <input type="submit" name="gnn_smtp_clear_logs" class="button button-secondary"
-                    value="<?php esc_attr_e('Clear All Logs', 'gnn-smtpmail'); ?>"
+                <input type="submit" name="gnn_smtp_clear_logs" class="button button-secondary" value="<?php esc_attr_e('Clear All Logs', 'gnn-smtpmail'); ?>"
                     onclick="return confirm('<?php esc_attr_e('Are you sure?', 'gnn-smtpmail'); ?>');">
             </form>
             <hr class="wp-header-end">
@@ -380,22 +317,15 @@ class GNN_SMTPMail_Admin
                         <input type="hidden" name="page" value="gnn-smtpmail-logs">
                         <select name="status">
                             <option value=""><?php esc_html_e('All Statuses', 'gnn-smtpmail'); ?></option>
-                            <option value="sent" <?php selected($status, 'sent'); ?>>
-                                <?php esc_html_e('Sent', 'gnn-smtpmail'); ?>
-                            </option>
-                            <option value="failed" <?php selected($status, 'failed'); ?>>
-                                <?php esc_html_e('Failed', 'gnn-smtpmail'); ?>
-                            </option>
+                            <option value="sent" <?php selected($status, 'sent'); ?>><?php esc_html_e('Sent', 'gnn-smtpmail'); ?></option>
+                            <option value="failed" <?php selected($status, 'failed'); ?>><?php esc_html_e('Failed', 'gnn-smtpmail'); ?></option>
                         </select>
                         <input type="submit" class="button" value="<?php esc_attr_e('Filter', 'gnn-smtpmail'); ?>">
                     </form>
                 </div>
                 <div class="tablenav-pages">
                     <span class="displaying-num">
-                        <?php
-                        // translators: %s: Total number of items.
-                        echo sprintf(esc_html__('%s items', 'gnn-smtpmail'), esc_html($logs['total']));
-                        ?>
+                        <?php echo sprintf(esc_html__('%s items', 'gnn-smtpmail'), esc_html($logs['total'])); ?>
                     </span>
                     <?php
                     $page_links = paginate_links(array(
@@ -407,7 +337,7 @@ class GNN_SMTPMail_Admin
                         'current' => $paged
                     ));
                     if ($page_links) {
-                        echo '<span class="pagination-links">' . wp_kses_post($page_links) . '</span>';
+                        echo '<span class="pagination-links">' . $page_links . '</span>';
                     }
                     ?>
                 </div>
