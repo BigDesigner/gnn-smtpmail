@@ -49,3 +49,9 @@ Go to `GNN SMTPMail > Logs` and click the "Clear All Logs" button.
 *   Added SMTP configuration.
 *   Added Email Logging.
 *   Added Test Email functionality.
+
+== Screenshots ==
+
+1. Configure your SMTP settings easily.
+2. Send test emails to verify connectivity.
+3. View detailed logs of all sent and failed emails.
