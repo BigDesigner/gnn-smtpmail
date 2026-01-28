@@ -41,6 +41,7 @@ class GNN_SMTP_Logger
 		) $charset_collate;";
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
         dbDelta($sql);
     }
 
@@ -51,6 +52,7 @@ class GNN_SMTP_Logger
     {
         global $wpdb;
         $table_name = self::get_table_name();
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
         $wpdb->query("DROP TABLE IF EXISTS $table_name");
     }
 
@@ -61,6 +63,7 @@ class GNN_SMTP_Logger
     {
         global $wpdb;
         $table_name = self::get_table_name();
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
         $wpdb->query("TRUNCATE TABLE $table_name");
     }
 
@@ -132,8 +135,10 @@ class GNN_SMTP_Logger
         // Count total
         $count_sql = "SELECT COUNT(*) FROM $table_name WHERE $where_sql";
         if (!empty($query_args)) {
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
             $total = $wpdb->get_var($wpdb->prepare($count_sql, $query_args));
         } else {
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
             $total = $wpdb->get_var($count_sql);
         }
 
@@ -142,6 +147,7 @@ class GNN_SMTP_Logger
         $query_args[] = $per_page;
         $query_args[] = $offset;
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
         $rows = $wpdb->get_results($wpdb->prepare($sql, $query_args));
 
         return array(

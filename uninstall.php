@@ -10,5 +10,7 @@ delete_option('gnn_smtp_options');
 delete_site_option('gnn_smtp_options');
 
 // Drop logs table
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $table_name = $wpdb->prefix . 'gnn_smtp_logs';
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $wpdb->query("DROP TABLE IF EXISTS $table_name");
