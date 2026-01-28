@@ -196,9 +196,8 @@ class GNN_SMTPMail_Admin
      */
     private function save_settings()
     {
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified in render_settings_page before calling this method.
-        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Individual fields are sanitized below.
-        $input = isset($_POST['gnn_smtp']) ? wp_unslash($_POST['gnn_smtp']) : array();
+        // Nonce is verified in render_settings_page before calling this method. Individual fields are sanitized below.
+        $input = isset($_POST['gnn_smtp']) ? wp_unslash($_POST['gnn_smtp']) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $existing = get_option(self::OPTION_NAME, array());
 
         $clean = array();
