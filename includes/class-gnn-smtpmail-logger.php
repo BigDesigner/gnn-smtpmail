@@ -39,7 +39,7 @@ class GNN_SMTPMail_Logger {
         }
         global $wpdb;
         $table = self::table_name();
-        $wpdb->insert(
+        $inserted = $wpdb->insert(
             $table,
             array(
                 'logged_at' => current_time( 'mysql' ),
@@ -51,6 +51,11 @@ class GNN_SMTPMail_Logger {
             ),
             array( '%s', '%s', '%s', '%s', '%s', '%s' )
         );
+        if ( false === $inserted ) {
+            update_option( 'gnn_smtpmail_last_insert_error', $wpdb->last_error );
+        } else {
+            delete_option( 'gnn_smtpmail_last_insert_error' );
+        }
     }
 
     public static function clear_all() {

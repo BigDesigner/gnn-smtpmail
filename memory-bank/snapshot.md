@@ -1,9 +1,9 @@
 # Project Snapshot: GNN SMTPMail
 
 ## Project Status
-- **Current Version:** 1.3.0
+- **Current Version:** 1.4.1
 - **Last Sync:** 2026-06-23
-- **Status:** Production Ready / Brevo API Integration Sprint Completed
+- **Status:** Production Ready / Log Fixes Completed
 
 ## Core Functionality
 - Dual sending channels: Custom SMTP or Brevo API (dynamic selection).
@@ -25,6 +25,11 @@
 - `assets/admin.js`: Dynamic settings section toggling between Custom SMTP and Brevo.
 
 ## Recent Changes
+- **v1.4.1:** Fixed log visibility issues with case-insensitive table existence check and direct Brevo sending logging. Added manual DB test logging action on diagnostic bar.
+- **v1.4.0:** Integrated Brevo Senders API to display verified senders dropdown, avoiding manual sender inputs.
+- **v1.3.4:** Added diagnostic warning/status block to Email Logs page.
+- **v1.3.2:** Fixed dbDelta SQL syntax casing and improved auto-migration logic.
+- **v1.3.1:** Fixed database logging and auto-migration helper class inclusions.
 - **v1.3.0:** Added Brevo API integration (switched using `pre_wp_mail` filter), updated admin options forms and JS dynamic sections.
 - **v1.2.1:** Security update (excluded `.vscode` from releases and git index).
 - **v1.2.0:** Integrated GitHub Updater, added plugins list action links, restored project resources/workflows, and bumped version.

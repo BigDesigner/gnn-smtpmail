@@ -114,6 +114,13 @@ class GNN_SMTPMail_Admin {
             GNN_SMTPMail_Logger::clear_all();
             add_settings_error( 'gnn-smtpmail', 'logs_cleared', __( 'Loglar temizlendi.', 'gnn-smtpmail' ), 'updated' );
         }
+
+        // Manually write test log
+        if ( isset( $_GET['gnn_test_log'] ) && $_GET['gnn_test_log'] === '1' ) {
+            GNN_SMTPMail_Logger::insert( 'test', 'db-test@gnn.tr', 'DB Connection Test', 'success', 'Database insert function is working correctly.' );
+            wp_redirect( admin_url( 'admin.php?page=gnn-smtpmail-logs&gnn_test_log_added=1' ) );
+            exit;
+        }
     }
 
     public function page_welcome() {
@@ -356,6 +363,10 @@ class GNN_SMTPMail_Admin {
         $total = $data['total'];
         $total_pages = max(1, ceil( $total / $per_page ));
 
+        if ( isset( $_GET['gnn_test_log_added'] ) ) {
+            add_settings_error( 'gnn-smtpmail', 'test_log_added', __( 'Veritabanına başarıyla test log satırı eklendi. Listede görebilirsiniz.', 'gnn-smtpmail' ), 'updated' );
+        }
+
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('E-posta Logları', 'gnn-smtpmail'); ?></h1>
@@ -363,11 +374,16 @@ class GNN_SMTPMail_Admin {
             if ( current_user_can('manage_options') ) {
                 global $wpdb;
                 $table = $wpdb->prefix . GNN_SMTPMAIL_TABLE;
-                $table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) ) === $table;
+                $show_table = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) );
+                $table_exists = ! empty( $show_table ) && strcasecmp( $show_table, $table ) === 0;
                 echo '<div class="notice notice-info inline" style="margin-top:10px;"><p>';
                 if ($table_exists) {
                     $count = $wpdb->get_var("SELECT COUNT(*) FROM $table");
-                    echo '<strong>Sistem Bilgisi:</strong> Log tablosu aktif. Toplam log satırı: ' . intval($count) . '<br>';
+                    echo '<strong>Sistem Bilgisi:</strong> Log tablosu aktif. Toplam log satırı: ' . intval($count) . ' | <a href="' . esc_url( admin_url('admin.php?page=gnn-smtpmail-logs&gnn_test_log=1') ) . '">' . esc_html__('Veritabanı Log Yazmasını Test Et', 'gnn-smtpmail') . '</a><br>';
+                    $last_insert_error = get_option( 'gnn_smtpmail_last_insert_error', '' );
+                    if ( ! empty( $last_insert_error ) ) {
+                        echo '<strong style="color:#d63638;">Son Log Kayıt Hatası:</strong> ' . esc_html( $last_insert_error ) . '<br>';
+                    }
                     if ( ! empty($wpdb->last_error) ) {
                         echo 'Son Veri Tabanı Hatası: ' . esc_html($wpdb->last_error);
                     }

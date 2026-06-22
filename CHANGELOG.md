@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.1] - 2026-06-23
+
+### Fixed
+- Fixed log visibility issue by making table existence verification case-insensitive.
+- Bypassed global action hook reliance under Brevo API mode, logging outcomes directly.
+- Added a manual database log write test utility to diagnostics block for easy validation.
+- Ensured migration/table creation runs safely on updates without overwriting existing tables.
+
 ## [1.4.0] - 2026-06-23
 
 ### Added

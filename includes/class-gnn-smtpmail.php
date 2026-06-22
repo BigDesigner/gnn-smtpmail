@@ -55,7 +55,8 @@ class GNN_SMTPMail {
         // Auto-run DB creation if version changed or table is missing (e.g. plugin updated via git/updater)
         global $wpdb;
         $table = $wpdb->prefix . GNN_SMTPMAIL_TABLE;
-        $table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) ) === $table;
+        $show_table = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) );
+        $table_exists = ! empty( $show_table ) && strcasecmp( $show_table, $table ) === 0;
 
         $db_version = get_option( 'gnn_smtpmail_db_version', '' );
         if ( ! $table_exists || $db_version !== GNN_SMTPMAIL_VERSION ) {
@@ -167,20 +168,21 @@ class GNN_SMTPMail {
             return $null; // Use default / PHPMailer SMTP
         }
 
-        $brevo = isset( $s['brevo'] ) ? $s['brevo'] : array();
-        $api_key = isset( $brevo['api_key'] ) ? $brevo['api_key'] : '';
-
-        if ( empty( $api_key ) ) {
-            $error = new WP_Error( 'brevo_missing_api_key', __( 'Brevo API Key is missing.', 'gnn-smtpmail' ) );
-            do_action( 'wp_mail_failed', $error );
-            return false;
-        }
-
         $to          = isset( $atts['to'] ) ? $atts['to'] : '';
         $subject     = isset( $atts['subject'] ) ? $atts['subject'] : '';
         $message     = isset( $atts['message'] ) ? $atts['message'] : '';
         $headers     = isset( $atts['headers'] ) ? $atts['headers'] : array();
         $attachments = isset( $atts['attachments'] ) ? $atts['attachments'] : array();
+
+        $brevo = isset( $s['brevo'] ) ? $s['brevo'] : array();
+        $api_key = isset( $brevo['api_key'] ) ? $brevo['api_key'] : '';
+
+        if ( empty( $api_key ) ) {
+            $error = new WP_Error( 'brevo_missing_api_key', __( 'Brevo API Key is missing.', 'gnn-smtpmail' ) );
+            GNN_SMTPMail_Logger::insert( 'brevo', $to, $subject, 'error', $error->get_error_message() );
+            do_action( 'wp_mail_failed', $error );
+            return false;
+        }
 
         // Build To array
         $to_emails = array();
@@ -201,6 +203,7 @@ class GNN_SMTPMail {
 
         if ( empty( $to_emails ) ) {
             $error = new WP_Error( 'brevo_invalid_recipient', __( 'Invalid or empty recipient email address.', 'gnn-smtpmail' ) );
+            GNN_SMTPMail_Logger::insert( 'brevo', $to, $subject, 'error', $error->get_error_message() );
             do_action( 'wp_mail_failed', $error );
             return false;
         }
@@ -299,6 +302,7 @@ class GNN_SMTPMail {
         ) );
 
         if ( is_wp_error( $response ) ) {
+            GNN_SMTPMail_Logger::insert( 'brevo', $to, $subject, 'error', $response->get_error_message() );
             do_action( 'wp_mail_failed', $response );
             return false;
         }
@@ -310,11 +314,14 @@ class GNN_SMTPMail {
             $decoded = json_decode( $response_body, true );
             $msg = isset( $decoded['message'] ) ? $decoded['message'] : __( 'Brevo API error', 'gnn-smtpmail' );
             $error = new WP_Error( 'brevo_api_failed', sprintf( __( 'Brevo API Error (HTTP %d): %s', 'gnn-smtpmail' ), $code, $msg ) );
+            GNN_SMTPMail_Logger::insert( 'brevo', $to, $subject, 'error', $error->get_error_message() );
             do_action( 'wp_mail_failed', $error );
             return false;
         }
 
         // Succeeded
+        GNN_SMTPMail_Logger::insert( 'brevo', $to, $subject, 'success', 'OK' );
+
         $mail_data = array(
             'to'          => $to,
             'subject'     => $subject,
@@ -330,6 +337,9 @@ class GNN_SMTPMail {
     public function on_mail_failed( $wp_error ) {
         $s = $this->get_settings();
         $channel = isset( $s['mailer_type'] ) ? $s['mailer_type'] : 'custom';
+        if ( $channel === 'brevo' ) {
+            return; // Already logged in pre_wp_mail_handler
+        }
         $data = $wp_error->get_error_data();
         $to = isset( $data['to'] ) ? $data['to'] : '';
         $subject = isset( $data['subject'] ) ? $data['subject'] : '';
@@ -340,6 +350,9 @@ class GNN_SMTPMail {
     public function on_mail_succeeded( $mail_data ) {
         $s = $this->get_settings();
         $channel = isset( $s['mailer_type'] ) ? $s['mailer_type'] : 'custom';
+        if ( $channel === 'brevo' ) {
+            return; // Already logged in pre_wp_mail_handler
+        }
         $to = isset( $mail_data['to'] ) ? $mail_data['to'] : '';
         $subject = isset( $mail_data['subject'] ) ? $mail_data['subject'] : '';
         GNN_SMTPMail_Logger::insert( $channel, is_array($to) ? implode(',', $to) : $to, $subject, 'success', 'OK' );
