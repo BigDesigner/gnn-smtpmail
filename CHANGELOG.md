@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1] - 2026-06-23
+
+### Fixed
+- Security update: Excluded local `.vscode` editor config and other developer metadata files from the repository tracking and release builds.
+
 ## [1.2.0] - 2026-06-23
 
 ### Added

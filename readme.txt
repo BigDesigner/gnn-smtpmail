@@ -2,7 +2,7 @@
 Contributors: GNN
 Requires at least: 5.2
 Tested up to: 6.6
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ YALNIZCA Custom SMTP ile WordPress e-postalarını güvenle gönderin. Test mail
 3. Yönetim panelinde **GNN SMTPMail → Custom SMTP** bölümünden ayarlarınızı yapın.
 
 == Değişiklikler ==
+= 1.2.1 =
+* Güvenlik güncellemesi yapıldı. Geliştirici ortamı yapılandırmaları ve geçici dosyalar dışlandı.
+
 = 1.2.0 =
 * GitHub deposundaki görsel varlıklar, belgeler ve iş akışı dosyaları ile yereldeki sade ve güvenli Custom SMTP yapısı harmanlandı.
 
