@@ -1,8 +1,8 @@
 === GNN SMTPMail ===
-Contributors: GNN
+Contributors: BigDesigner
 Requires at least: 5.2
 Tested up to: 6.6
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ YALNIZCA Custom SMTP ile WordPress e-postalarını güvenle gönderin. Test mail
 3. Yönetim panelinde **GNN SMTPMail → Custom SMTP** bölümünden ayarlarınızı yapın.
 
 == Değişiklikler ==
+= 1.3.3 =
+* Geliştirici bilgileri ve eklenti bağlantıları güncellendi.
+
 = 1.3.2 =
 * Veri tabanı otomatik kontrol sistemi güçlendirildi. dbDelta SQL yazım standartları (küçük harfli alan tipleri) düzeltildi ve tablo yoksa otomatik iyileştirme eklendi.
 

@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.3] - 2026-06-23
+
+### Changed
+- Updated plugin header author metadata to `BigDesigner` and set developer profile/repository URLs.
+
 ## [1.3.2] - 2026-06-23
 
 ### Fixed
