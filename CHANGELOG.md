@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-06-23
+
+### Added
+- Integrated Brevo HTTP API for sending emails, providing a reliable alternative to standard SMTP.
+- Added dynamic fields to the settings page, toggling dynamically between Custom SMTP and Brevo API options.
+
 ## [1.2.1] - 2026-06-23
 
 ### Fixed

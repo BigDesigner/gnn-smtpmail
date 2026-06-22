@@ -19,10 +19,23 @@ This document tracks the evolution of the GNN SMTPMail WordPress plugin.
 ### UI — Premium Design System
 - [x] **UI-001:** Refine admin pages with unified grid layout and badges.
 - [x] **UI-002:** Add custom plugin action links (Donate, Settings, Check Updates) to the plugins table.
+- [x] **UI-003:** Implement dynamic JS settings section toggle for mailer types.
+
+### FEAT — Multi-Channel Email Sending
+- [x] **FEAT-001:** Custom SMTP sending via PHPMailer init.
+- [x] **FEAT-002:** Brevo API sending via `pre_wp_mail` filter using `wp_remote_post`.
 
 ---
 
 ## 🚀 Release History
+
+### v1.3.0 — Brevo API Entegrasyonu
+- [x] Brevo API entegrasyonu geri getirildi ve `pre_wp_mail` kancasıyla HTTP gönderim desteği kuruldu.
+- [x] Ayarlar ekranı dinamik Custom SMTP / Brevo API geçişi destekleyecek şekilde güncellendi.
+- [x] Log tablosuna hangi kanalla (custom/brevo) gönderildiği bilgisi dinamik eklendi.
+
+### v1.2.1 — Güvenlik Güncellemesi
+- [x] Gereksiz geliştirici ortamı yapılandırmaları ve geçici dosyalar dışlandı.
 
 ### v1.2.0 — Harmanlama & GitHub Güncelleyici
 - [x] GitHub Updater entegrasyonu tamamlandı.
@@ -31,8 +44,7 @@ This document tracks the evolution of the GNN SMTPMail WordPress plugin.
 - [x] Memory Bank, Agents, Docs ve Tasks klasörleri oluşturuldu.
 
 ### v1.1.0 — Custom-Only SMTP
-- [x] Brevo API entegrasyonu kaldırılarak sadece Özel SMTP yapısına odaklanıldı.
-- [x] Ayarlar ve veri tabanı yapılandırmaları sadeleştirildi.
+- [x] Brevo API entegrasyonu kaldırılarak sadece Özelleştirilmiş SMTP yapısına odaklanıldı.
 
 ### v1.0.0 — Initial Release
 - [x] Brevo API + Custom SMTP gönderim desteği.

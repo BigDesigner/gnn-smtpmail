@@ -12,10 +12,14 @@
 - **Decision:** Use `wp_mail_succeeded` and `wp_mail_failed` actions.
 - **Rationale:** WordPress core fires these hooks upon successful or failed execution of `wp_mail()`. This allows us to cleanly log the recipient, subject, status, and error messages without modifying core files or wrapping individual send actions.
 
-## 4. Simplified Architecture (Custom-only)
-- **Decision:** Focus exclusively on Custom SMTP and deprecate third-party API providers like Brevo.
-- **Rationale:** Reduces code bloat, dependencies, and complex API credential checks, keeping the plugin simple, fast, and highly secure.
+## 4. Multi-channel Architecture (Custom SMTP & Brevo API)
+- **Decision:** Offer a dynamic choice between Custom SMTP (via standard PHPMailer) and Brevo API (via HTTP calls).
+- **Rationale:** While SMTP is highly compatible, HTTP APIs (like Brevo) bypass SMTP port blocks on strict hosting providers, increase reliability, and provide superior speed for transactional mail.
 
-## 5. Plugin Updates
+## 5. HTTP Sending Implementation (Brevo API)
+- **Decision:** Hook into `pre_wp_mail` filter to intercept mail delivery when Brevo is selected.
+- **Rationale:** By returning a non-null value from `pre_wp_mail`, we short-circuit the default WordPress mailing pipeline and dispatch the request to Brevo API using `wp_remote_post`. This guarantees security, intercepts all outgoing emails sitewide, and integrates nicely with existing logger actions.
+
+## 6. Plugin Updates
 - **Decision:** GitHub-based manual/automatic updater.
 - **Rationale:** Allows for direct distribution and version control without the constraints of the official WordPress.org repository, while maintaining a seamless update experience for users.
