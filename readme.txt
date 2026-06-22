@@ -2,7 +2,7 @@
 Contributors: BigDesigner
 Requires at least: 5.2
 Tested up to: 6.6
-Stable tag: 1.3.4
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ YALNIZCA Custom SMTP ile WordPress e-postalarını güvenle gönderin. Test mail
 3. Yönetim panelinde **GNN SMTPMail → Custom SMTP** bölümünden ayarlarınızı yapın.
 
 == Değişiklikler ==
+= 1.4.0 =
+* Brevo Senders API entegrasyonu tamamlandı. Manuel gönderici adı/domain girişleri kaldırılarak, Brevo hesabınızda doğrulanmış kayıtlı göndericilerin seçilebildiği açılır liste (dropdown) eklendi.
+
 = 1.3.4 =
 * Loglar sayfasında veri tabanı ve log tablosu durumunu canlı denetleyen tanılayıcı (debug) uyarı kutusu eklendi.
 

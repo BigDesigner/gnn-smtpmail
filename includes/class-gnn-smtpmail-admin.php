@@ -60,10 +60,19 @@ class GNN_SMTPMail_Admin {
                 'from_name'   => isset($_POST['from_name']) ? sanitize_text_field( wp_unslash($_POST['from_name']) ) : '',
             );
 
+            $brevo_api_key = isset($_POST['brevo_api_key']) ? sanitize_text_field( wp_unslash($_POST['brevo_api_key']) ) : '';
+            $brevo_sender_select = isset($_POST['brevo_sender_select']) ? sanitize_text_field( wp_unslash($_POST['brevo_sender_select']) ) : '';
+            $brevo_from_name = '';
+            $brevo_from_email = '';
+
+            if ( ! empty( $brevo_sender_select ) && strpos( $brevo_sender_select, '|' ) !== false ) {
+                list( $brevo_from_name, $brevo_from_email ) = explode( '|', $brevo_sender_select, 2 );
+            }
+
             $brevo = array(
-                'api_key'    => isset($_POST['brevo_api_key']) ? sanitize_text_field( wp_unslash($_POST['brevo_api_key']) ) : '',
-                'from_email' => isset($_POST['brevo_from_email']) ? sanitize_email( wp_unslash($_POST['brevo_from_email']) ) : '',
-                'from_name'  => isset($_POST['brevo_from_name']) ? sanitize_text_field( wp_unslash($_POST['brevo_from_name']) ) : '',
+                'api_key'    => $brevo_api_key,
+                'from_email' => $brevo_from_email,
+                'from_name'  => $brevo_from_name,
             );
 
             $settings = array(
@@ -196,19 +205,92 @@ class GNN_SMTPMail_Admin {
 
                 <div id="gnn_section_brevo" class="gnn-settings-section" style="<?php echo $mailer_type === 'brevo' ? '' : 'display:none;'; ?>">
                     <h3><?php esc_html_e('Brevo API Ayarları', 'gnn-smtpmail'); ?></h3>
+                    <?php
+                    $senders = array();
+                    $api_error = '';
+                    if ( ! empty( $b['api_key'] ) ) {
+                        $cache_key = 'gnn_smtpmail_brevo_senders_' . md5( $b['api_key'] );
+                        $senders = get_transient( $cache_key );
+                        if ( false === $senders ) {
+                            $response = wp_remote_get( 'https://api.brevo.com/v3/senders', array(
+                                'headers' => array(
+                                    'api-key' => $b['api_key'],
+                                    'Accept'  => 'application/json',
+                                ),
+                                'timeout' => 10,
+                            ) );
+                            if ( is_wp_error( $response ) ) {
+                                $api_error = __( 'Brevo API bağlantı hatası: ', 'gnn-smtpmail' ) . $response->get_error_message();
+                                $senders = array();
+                            } else {
+                                $code = wp_remote_retrieve_response_code( $response );
+                                $body = wp_remote_retrieve_body( $response );
+                                if ( $code === 200 ) {
+                                    $decoded = json_decode( $body, true );
+                                    if ( isset( $decoded['senders'] ) && is_array( $decoded['senders'] ) ) {
+                                        $senders = $decoded['senders'];
+                                        set_transient( $cache_key, $senders, HOUR_IN_SECONDS );
+                                    } else {
+                                        $senders = array();
+                                    }
+                                } else {
+                                    $decoded = json_decode( $body, true );
+                                    $msg = isset( $decoded['message'] ) ? $decoded['message'] : __( 'Bilinmeyen hata', 'gnn-smtpmail' );
+                                    $api_error = sprintf( __( 'Brevo API Hatası (HTTP %d): %s', 'gnn-smtpmail' ), $code, $msg );
+                                    $senders = array();
+                                }
+                            }
+                        }
+                    }
+                    ?>
                     <table class="form-table" role="presentation">
                         <tr>
                             <th><?php esc_html_e('Brevo API Key', 'gnn-smtpmail'); ?></th>
-                            <td><input type="password" name="brevo_api_key" value="<?php echo esc_attr( $b['api_key'] ?? '' ); ?>" class="regular-text" autocomplete="new-password" /></td>
+                            <td>
+                                <input type="password" name="brevo_api_key" value="<?php echo esc_attr( $b['api_key'] ?? '' ); ?>" class="regular-text" autocomplete="new-password" />
+                                <p class="description"><?php esc_html_e('Brevo hesabınızdaki API Key değerini buraya girin ve kaydedin.', 'gnn-smtpmail'); ?></p>
+                            </td>
                         </tr>
-                        <tr>
-                            <th><?php esc_html_e('Gönderen E-posta', 'gnn-smtpmail'); ?></th>
-                            <td><input type="email" name="brevo_from_email" value="<?php echo esc_attr( $b['from_email'] ?? '' ); ?>" class="regular-text" /></td>
-                        </tr>
-                        <tr>
-                            <th><?php esc_html_e('Gönderen Adı', 'gnn-smtpmail'); ?></th>
-                            <td><input type="text" name="brevo_from_name" value="<?php echo esc_attr( $b['from_name'] ?? '' ); ?>" class="regular-text" /></td>
-                        </tr>
+                        <?php if ( empty( $b['api_key'] ) ) : ?>
+                            <tr>
+                                <th><?php esc_html_e('Gönderici Seçin', 'gnn-smtpmail'); ?></th>
+                                <td>
+                                    <span class="description" style="color: #d63638;"><?php esc_html_e('Gönderici seçmek için önce API anahtarınızı girip kaydedin.', 'gnn-smtpmail'); ?></span>
+                                </td>
+                            </tr>
+                        <?php elseif ( ! empty( $api_error ) ) : ?>
+                            <tr>
+                                <th><?php esc_html_e('Gönderici Seçin', 'gnn-smtpmail'); ?></th>
+                                <td>
+                                    <span class="description" style="color: #d63638;"><?php echo esc_html( $api_error ); ?></span>
+                                </td>
+                            </tr>
+                        <?php else : ?>
+                            <tr>
+                                <th><?php esc_html_e('Gönderici Seçin', 'gnn-smtpmail'); ?></th>
+                                <td>
+                                    <select name="brevo_sender_select">
+                                        <option value=""><?php esc_html_e('-- Seçin --', 'gnn-smtpmail'); ?></option>
+                                        <?php
+                                        $current_sender = ($b['from_name'] ?? '') . '|' . ($b['from_email'] ?? '');
+                                        foreach ( $senders as $sender ) {
+                                            if ( empty($sender['active']) ) {
+                                                continue;
+                                            }
+                                            $val = $sender['name'] . '|' . $sender['email'];
+                                            $label = $sender['name'] . ' (' . $sender['email'] . ')';
+                                            ?>
+                                            <option value="<?php echo esc_attr($val); ?>" <?php selected( $current_sender, $val ); ?>>
+                                                <?php echo esc_html($label); ?>
+                                            </option>
+                                            <?php
+                                        }
+                                        ?>
+                                    </select>
+                                    <p class="description"><?php esc_html_e('Gönderimlerin spam klasörüne düşmemesi için Brevo hesabınızda doğrulanmış bir alan adı/gönderici seçin.', 'gnn-smtpmail'); ?></p>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
                     </table>
                 </div>
 

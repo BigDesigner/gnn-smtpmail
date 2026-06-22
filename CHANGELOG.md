@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-06-23
+
+### Added
+- Integrated Brevo Senders API. Removed manual sender name/email input text fields in favor of a dynamic select dropdown displaying only active, verified senders linked to the configured API key.
+
 ## [1.3.4] - 2026-06-23
 
 ### Added

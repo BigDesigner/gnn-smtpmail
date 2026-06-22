@@ -3,7 +3,7 @@
  * Plugin Name: GNN SMTPMail
  * Plugin URI:  https://github.com/BigDesigner/gnn-smtpmail
  * Description: Custom SMTP ile WordPress e-posta gönderimini güvenli şekilde yapılandırın. Test e-postası gönderin, hata/success loglarını görüntüleyin ve kaldırırken tüm verileri temizleyin.
- * Version: 1.3.4
+ * Version: 1.4.0
  * Author:      BigDesigner
  * Author URI:  https://github.com/BigDesigner
  * Text Domain: gnn-smtpmail
@@ -11,7 +11,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'GNN_SMTPMAIL_VERSION', '1.3.4' );
+define( 'GNN_SMTPMAIL_VERSION', '1.4.0' );
 define( 'GNN_SMTPMAIL_FILE', __FILE__ );
 define( 'GNN_SMTPMAIL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GNN_SMTPMAIL_URL', plugin_dir_url( __FILE__ ) );
