@@ -117,12 +117,7 @@ class GNN_SMTPMail_Admin {
             add_settings_error( 'gnn-smtpmail', 'logs_cleared', __( 'Loglar temizlendi.', 'gnn-smtpmail' ), 'updated' );
         }
 
-        // Manually write test log
-        if ( isset( $_GET['gnn_test_log'] ) && $_GET['gnn_test_log'] === '1' ) {
-            GNN_SMTPMail_Logger::insert( 'test', 'db-test@gnn.tr', 'DB Connection Test', 'success', 'Database insert function is working correctly.' );
-            wp_redirect( admin_url( 'admin.php?page=gnn-smtpmail-logs&gnn_test_log_added=1' ) );
-            exit;
-        }
+
     }
 
     public function page_welcome() {
@@ -365,9 +360,7 @@ class GNN_SMTPMail_Admin {
         $total = $data['total'];
         $total_pages = max(1, ceil( $total / $per_page ));
 
-        if ( isset( $_GET['gnn_test_log_added'] ) ) {
-            add_settings_error( 'gnn-smtpmail', 'test_log_added', __( 'Veritabanına başarıyla test log satırı eklendi. Listede görebilirsiniz.', 'gnn-smtpmail' ), 'updated' );
-        }
+
 
         ?>
         <div class="wrap">
@@ -388,29 +381,36 @@ class GNN_SMTPMail_Admin {
                     $wp_mail_defined_in = 'Error: ' . $e->getMessage();
                 }
 
-                echo '<div class="notice notice-info inline" style="margin-top:10px;"><p>';
-                if ($table_exists) {
-                    $count = $wpdb->get_var("SELECT COUNT(*) FROM $table");
-                    echo '<strong>Sistem Bilgisi:</strong> Log tablosu aktif. Toplam log satırı: ' . intval($count) . ' | <a href="' . esc_url( admin_url('admin.php?page=gnn-smtpmail-logs&gnn_test_log=1') ) . '">' . esc_html__('Veritabanı Log Yazmasını Test Et', 'gnn-smtpmail') . '</a><br>';
-                    
-                    echo '<strong>wp_mail() Kaynağı:</strong> ';
-                    if ( strpos( $wp_mail_defined_in, 'wp-includes/pluggable.php' ) !== false ) {
-                        echo '<span style="color:#2ec4b6;">wp-includes/pluggable.php (Çekirdek - Uyumlu)</span><br>';
+                $has_conflict = strpos( $wp_mail_defined_in, 'wp-includes/pluggable.php' ) === false;
+                $last_insert_error = get_option( 'gnn_smtpmail_last_insert_error', '' );
+                $last_db_error = $wpdb->last_error;
+
+                $has_issue = ! $table_exists || $has_conflict || ! empty( $last_insert_error ) || ! empty( $last_db_error );
+
+                if ( $has_issue ) {
+                    echo '<div class="notice notice-info inline" style="margin-top:10px;"><p>';
+                    if ($table_exists) {
+                        $count = $wpdb->get_var("SELECT COUNT(*) FROM $table");
+                        echo '<strong>Sistem Bilgisi:</strong> Log tablosu aktif. Toplam log satırı: ' . intval($count) . '<br>';
+                        
+                        echo '<strong>wp_mail() Kaynağı:</strong> ';
+                        if ( ! $has_conflict ) {
+                            echo '<span style="color:#2ec4b6;">wp-includes/pluggable.php (Çekirdek - Uyumlu)</span><br>';
+                        } else {
+                            echo '<span style="color:#d63638; font-weight:bold;">' . esc_html( $wp_mail_defined_in ) . ' (Çakışma! Başka bir eklenti wp_mail() fonksiyonunu ele geçirmiş durumda. Bizim eklentimiz pasif kalacaktır.)</span><br>';
+                        }
+                        
+                        if ( ! empty( $last_insert_error ) ) {
+                            echo '<strong style="color:#d63638;">Son Log Kayıt Hatası:</strong> ' . esc_html( $last_insert_error ) . '<br>';
+                        }
+                        if ( ! empty( $last_db_error ) ) {
+                            echo 'Son Veri Tabanı Hatası: ' . esc_html( $last_db_error ) . '<br>';
+                        }
                     } else {
-                        echo '<span style="color:#d63638; font-weight:bold;">' . esc_html( $wp_mail_defined_in ) . ' (Çakışma! Başka bir eklenti wp_mail() fonksiyonunu ele geçirmiş durumda. Bizim eklentimiz pasif kalacaktır.)</span><br>';
+                        echo '<strong>Sistem Hatası:</strong> `' . esc_html($table) . '` tablosu veri tabanında bulunamadı!';
                     }
-                    
-                    $last_insert_error = get_option( 'gnn_smtpmail_last_insert_error', '' );
-                    if ( ! empty( $last_insert_error ) ) {
-                        echo '<strong style="color:#d63638;">Son Log Kayıt Hatası:</strong> ' . esc_html( $last_insert_error ) . '<br>';
-                    }
-                    if ( ! empty($wpdb->last_error) ) {
-                        echo 'Son Veri Tabanı Hatası: ' . esc_html($wpdb->last_error);
-                    }
-                } else {
-                    echo '<strong>Sistem Hatası:</strong> `' . esc_html($table) . '` tablosu veri tabanında bulunamadı!';
+                    echo '</p></div>';
                 }
-                echo '</p></div>';
             }
             ?>
             <?php settings_errors( 'gnn-smtpmail' ); ?>

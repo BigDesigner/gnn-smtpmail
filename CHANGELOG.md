@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.4] - 2026-06-23
+
+### Changed
+- Refactored diagnostics: System information box is now completely hidden unless there is an active table error, database insert failure, or wp_mail() hook conflict.
+- Removed DB manual log writing test buttons and utilities from settings and log views.
+
 ## [1.4.3] - 2026-06-23
 
 ### Added
