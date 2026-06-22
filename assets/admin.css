@@ -1,0 +1,6 @@
+/* Simple admin styles */
+.gnn-grid { display:flex; gap:10px; margin-top:10px;}
+.gnn-inline { display:flex; gap:10px; align-items:center;}
+.gnn-badge { padding:2px 8px; border-radius:4px; font-weight:600; }
+.gnn-badge.success { background:#e6ffed; border:1px solid #a5d6a7; }
+.gnn-badge.error { background:#ffe6e6; border:1px solid #ef9a9a; }

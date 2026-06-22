@@ -1,14 +1,15 @@
 <?php
-if (!defined('WP_UNINSTALL_PLUGIN')) {
-    exit;
-}
+/**
+ * Fired when the plugin is uninstalled.
+ */
+if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) { exit; }
+
+require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 global $wpdb;
+$option = 'gnn_smtpmail_settings';
+delete_option( $option );
+delete_site_option( $option );
 
-// Delete options
-delete_option('gnn_smtp_options');
-delete_site_option('gnn_smtp_options');
-
-// Drop logs table
-$table_name = $wpdb->prefix . 'gnn_smtp_logs';
-$wpdb->query("DROP TABLE IF EXISTS $table_name");
+$table = $wpdb->prefix . 'gnn_smtpmail_logs';
+$wpdb->query( "DROP TABLE IF EXISTS $table" );

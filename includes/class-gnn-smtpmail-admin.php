@@ -1,390 +1,287 @@
 <?php
-if (!defined('ABSPATH')) {
-    exit;
-}
+if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-class GNN_SMTPMail_Admin
-{
+class GNN_SMTPMail_Admin {
 
-    /**
-     * Option name.
-     */
-    const OPTION_NAME = 'gnn_smtp_options';
-
-    /**
-     * Nonce action.
-     */
-    const NONCE_ACTION = 'gnn_smtp_admin_action';
-
-    /**
-     * Initialize admin hooks.
-     */
-    public function init()
-    {
-        add_action('admin_menu', array($this, 'add_admin_menu'));
-        add_action('admin_init', array($this, 'register_settings'));
+    public function __construct() {
+        add_action( 'admin_menu', array( $this, 'admin_menu' ) );
+        add_action( 'admin_init', array( $this, 'maybe_save_forms' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
     }
 
-    /**
-     * Register settings (not using Settings API for full custom control in form handling if preferred, 
-     * but user asked for "Settings page: save enabled..."). 
-     * We will handle saving manually in the render method or admin_post to satisfy specific logic like password preservation.
-     */
-    public function register_settings()
-    {
-        register_setting('gnn_smtp_settings_group', self::OPTION_NAME);
+    public function assets( $hook ) {
+        if ( strpos( $hook, 'gnn-smtpmail' ) === false ) return;
+        wp_enqueue_style( 'gnn-smtpmail-admin', GNN_SMTPMAIL_URL . 'assets/admin.css', array(), GNN_SMTPMAIL_VERSION );
+        wp_enqueue_script( 'gnn-smtpmail-admin', GNN_SMTPMAIL_URL . 'assets/admin.js', array('jquery'), GNN_SMTPMAIL_VERSION, true );
     }
 
-    /**
-     * Add menu pages.
-     */
-    public function add_admin_menu()
-    {
+    public function admin_menu() {
         add_menu_page(
-            __('GNN SMTPMail', 'gnn-smtpmail'),
-            __('GNN SMTPMail', 'gnn-smtpmail'),
+            __( 'GNN SMTPMail', 'gnn-smtpmail' ),
+            __( 'GNN SMTPMail', 'gnn-smtpmail' ),
             'manage_options',
             'gnn-smtpmail',
-            array($this, 'render_settings_page'),
-            'dashicons-email-alt'
+            array( $this, 'page_welcome' ),
+            'dashicons-email-alt2',
+            81
         );
 
-        add_submenu_page(
-            'gnn-smtpmail',
-            __('Settings', 'gnn-smtpmail'),
-            __('Settings', 'gnn-smtpmail'),
-            'manage_options',
-            'gnn-smtpmail',
-            array($this, 'render_settings_page')
-        );
-
-        add_submenu_page(
-            'gnn-smtpmail',
-            __('Test Mail', 'gnn-smtpmail'),
-            __('Test Mail', 'gnn-smtpmail'),
-            'manage_options',
-            'gnn-smtpmail-test',
-            array($this, 'render_test_page')
-        );
-
-        add_submenu_page(
-            'gnn-smtpmail',
-            __('Logs', 'gnn-smtpmail'),
-            __('Logs', 'gnn-smtpmail'),
-            'manage_options',
-            'gnn-smtpmail-logs',
-            array($this, 'render_logs_page')
-        );
+        add_submenu_page( 'gnn-smtpmail', __( 'Custom SMTP', 'gnn-smtpmail' ), __( 'Custom SMTP', 'gnn-smtpmail' ), 'manage_options', 'gnn-smtpmail-custom', array( $this, 'page_custom' ) );
+        add_submenu_page( 'gnn-smtpmail', __( 'Test Mail', 'gnn-smtpmail' ), __( 'Test Mail', 'gnn-smtpmail' ), 'manage_options', 'gnn-smtpmail-test', array( $this, 'page_test' ) );
+        add_submenu_page( 'gnn-smtpmail', __( 'Loglar', 'gnn-smtpmail' ), __( 'Loglar', 'gnn-smtpmail' ), 'manage_options', 'gnn-smtpmail-logs', array( $this, 'page_logs' ) );
     }
 
-    /**
-     * Render Settings Page.
-     */
-    public function render_settings_page()
-    {
-        if (!current_user_can('manage_options')) {
-            return;
+    private function settings() {
+        $s = get_option( GNN_SMTPMAIL_OPTION, array() );
+        if ( ! isset( $s['custom'] ) ) { $s['custom'] = array(); }
+        return $s;
+    }
+
+    public function maybe_save_forms() {
+        if ( ! current_user_can( 'manage_options' ) ) return;
+
+        // Save Custom
+        if ( isset( $_POST['gnn_custom_save'] ) ) {
+            check_admin_referer( 'gnn_custom_save_action', 'gnn_custom_nonce' );
+            $settings = $this->settings();
+
+            $custom = array(
+                'enabled'     => isset($_POST['enabled']) ? 1 : 0,
+                'host'        => isset($_POST['host']) ? sanitize_text_field( wp_unslash($_POST['host']) ) : '',
+                'port'        => isset($_POST['port']) ? intval($_POST['port']) : 587,
+                'smtp_secure' => isset($_POST['smtp_secure']) && in_array($_POST['smtp_secure'], array('ssl','tls','none'), true) ? sanitize_text_field($_POST['smtp_secure']) : 'tls',
+                'auth'        => isset($_POST['auth']) ? 1 : 0,
+                'username'    => isset($_POST['username']) ? sanitize_text_field( wp_unslash($_POST['username']) ) : '',
+                'password'    => isset($_POST['password']) ? sanitize_text_field( wp_unslash($_POST['password']) ) : '',
+                'from_email'  => isset($_POST['from_email']) ? sanitize_email( wp_unslash($_POST['from_email']) ) : '',
+                'from_name'   => isset($_POST['from_name']) ? sanitize_text_field( wp_unslash($_POST['from_name']) ) : '',
+            );
+
+            $settings = array( 'custom' => $custom ); // keep only custom
+            update_option( GNN_SMTPMAIL_OPTION, $settings );
+            add_settings_error( 'gnn-smtpmail', 'saved', __( 'Custom SMTP ayarları kaydedildi.', 'gnn-smtpmail' ), 'updated' );
         }
 
-        // Handle Save
-        if (isset($_POST['gnn_smtp_save_settings'])) {
-            check_admin_referer(self::NONCE_ACTION);
-            $this->save_settings();
-            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Settings saved.', 'gnn-smtpmail') . '</p></div>';
+        // Send test mail
+        if ( isset( $_POST['gnn_test_send'] ) ) {
+            check_admin_referer( 'gnn_test_send_action', 'gnn_test_nonce' );
+
+            $to      = isset($_POST['to'])      ? sanitize_email( wp_unslash($_POST['to']) ) : '';
+            $subject = isset($_POST['subject']) ? sanitize_text_field( wp_unslash($_POST['subject']) ) : 'GNN SMTPMail Test';
+            $message = isset($_POST['message']) ? wp_kses_post( wp_unslash($_POST['message']) ) : __( 'Bu bir test e-postasıdır.', 'gnn-smtpmail' );
+
+            if ( ! is_email( $to ) ) {
+                add_settings_error( 'gnn-smtpmail', 'invalid_email', __( 'Geçerli bir e-posta adresi girin.', 'gnn-smtpmail' ), 'error' );
+                return;
+            }
+
+            add_filter( 'wp_mail_content_type', function() { return 'text/html'; } );
+            $sent = wp_mail( $to, $subject, wpautop( $message ) );
+            remove_filter( 'wp_mail_content_type', '__return_false' );
+
+            if ( $sent ) {
+                add_settings_error( 'gnn-smtpmail', 'test_ok', __( 'Test e-postası başarıyla gönderildi. Logları kontrol edebilirsiniz.', 'gnn-smtpmail' ), 'updated' );
+            } else {
+                add_settings_error( 'gnn-smtpmail', 'test_fail', __( 'Test e-postası gönderilemedi. Hata detayları loglarda listelenecektir.', 'gnn-smtpmail' ), 'error' );
+            }
         }
 
-        $options = get_option(self::OPTION_NAME, array());
+        // Clear logs
+        if ( isset( $_POST['gnn_clear_logs'] ) ) {
+            check_admin_referer( 'gnn_clear_logs_action', 'gnn_clear_logs_nonce' );
+            GNN_SMTPMail_Logger::clear_all();
+            add_settings_error( 'gnn-smtpmail', 'logs_cleared', __( 'Loglar temizlendi.', 'gnn-smtpmail' ), 'updated' );
+        }
+    }
 
-        // Defaults
-        $mailer = isset($options['mailer']) ? $options['mailer'] : 'smtp';
-        $smtp_host = isset($options['smtp_host']) ? $options['smtp_host'] : '';
-        $smtp_port = isset($options['smtp_port']) ? $options['smtp_port'] : '587';
-        $smtp_secure = isset($options['smtp_secure']) ? $options['smtp_secure'] : 'tls';
-        $smtp_auth = isset($options['smtp_auth']) && $options['smtp_auth'];
-        $smtp_user = isset($options['smtp_user']) ? $options['smtp_user'] : '';
-        $from_email = isset($options['from_email']) ? $options['from_email'] : '';
-        $from_name = isset($options['from_name']) ? $options['from_name'] : '';
-        $timeout = isset($options['timeout']) ? $options['timeout'] : 10;
-
+    public function page_welcome() {
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e('GNN SMTPMail Settings', 'gnn-smtpmail'); ?></h1>
-            <form method="post" action="">
-                <?php wp_nonce_field(self::NONCE_ACTION); ?>
-                <table class="form-table">
+            <h1><?php esc_html_e('GNN SMTPMail (Custom SMTP)', 'gnn-smtpmail'); ?></h1>
+            <?php settings_errors( 'gnn-smtpmail' ); ?>
+            <p><?php esc_html_e('Custom SMTP ile tüm WordPress e-postalarınızı güvenli şekilde gönderin. Soldaki menüden ayarlarınızı yapın, ardından Test Mail sayfasından doğrulayın ve Loglar sayfasından durumu takip edin.', 'gnn-smtpmail'); ?></p>
+            <div class="gnn-grid">
+                <a class="button button-primary" href="<?php echo esc_url( admin_url('admin.php?page=gnn-smtpmail-custom') ); ?>"><?php esc_html_e('Custom SMTP', 'gnn-smtpmail'); ?></a>
+                <a class="button" href="<?php echo esc_url( admin_url('admin.php?page=gnn-smtpmail-test') ); ?>"><?php esc_html_e('Test Mail', 'gnn-smtpmail'); ?></a>
+                <a class="button" href="<?php echo esc_url( admin_url('admin.php?page=gnn-smtpmail-logs') ); ?>"><?php esc_html_e('Loglar', 'gnn-smtpmail'); ?></a>
+            </div>
+        </div>
+        <?php
+    }
+
+    public function page_custom() {
+        $s = get_option( GNN_SMTPMAIL_OPTION, array() );
+        $c = isset($s['custom']) ? $s['custom'] : array();
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e('Custom SMTP Ayarları', 'gnn-smtpmail'); ?></h1>
+            <?php settings_errors( 'gnn-smtpmail' ); ?>
+            <form method="post">
+                <?php wp_nonce_field( 'gnn_custom_save_action', 'gnn_custom_nonce' ); ?>
+                <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row"><?php esc_html_e('Mailer Type', 'gnn-smtpmail'); ?></th>
+                        <th><?php esc_html_e('Custom SMTP\'yi Etkinleştir', 'gnn-smtpmail'); ?></th>
+                        <td><label><input type="checkbox" name="enabled" value="1" <?php checked( !empty($c['enabled']) ); ?> /> <?php esc_html_e('Etkin', 'gnn-smtpmail'); ?></label></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Sunucu', 'gnn-smtpmail'); ?></th>
+                        <td><input type="text" name="host" value="<?php echo esc_attr( $c['host'] ?? '' ); ?>" class="regular-text" required /></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Port', 'gnn-smtpmail'); ?></th>
+                        <td><input type="number" name="port" value="<?php echo esc_attr( $c['port'] ?? 587 ); ?>" /></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Şifreleme', 'gnn-smtpmail'); ?></th>
                         <td>
-                            <select name="gnn_smtp[mailer]">
-                                <option value="smtp" <?php selected($mailer, 'smtp'); ?>><?php esc_html_e('SMTP', 'gnn-smtpmail'); ?></option>
-                                <option value="mail" <?php selected($mailer, 'mail'); ?>><?php esc_html_e('Default (PHP mail)', 'gnn-smtpmail'); ?></option>
+                            <select name="smtp_secure">
+                                <?php $sel = $c['smtp_secure'] ?? 'tls'; ?>
+                                <option value="none" <?php selected($sel,'none'); ?>><?php esc_html_e('Yok', 'gnn-smtpmail'); ?></option>
+                                <option value="tls" <?php selected($sel,'tls'); ?>>TLS</option>
+                                <option value="ssl" <?php selected($sel,'ssl'); ?>>SSL</option>
                             </select>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('From Email', 'gnn-smtpmail'); ?></th>
-                        <td><input type="email" name="gnn_smtp[from_email]" value="<?php echo esc_attr($from_email); ?>"
-                                class="regular-text"></td>
+                        <th><?php esc_html_e('SMTP Kimlik Doğrulama', 'gnn-smtpmail'); ?></th>
+                        <td><label><input type="checkbox" name="auth" value="1" <?php checked( !empty($c['auth']) ); ?> /> <?php esc_html_e('Açık', 'gnn-smtpmail'); ?></label></td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('From Name', 'gnn-smtpmail'); ?></th>
-                        <td><input type="text" name="gnn_smtp[from_name]" value="<?php echo esc_attr($from_name); ?>"
-                                class="regular-text"></td>
+                        <th><?php esc_html_e('Kullanıcı Adı', 'gnn-smtpmail'); ?></th>
+                        <td><input type="text" name="username" value="<?php echo esc_attr( $c['username'] ?? '' ); ?>" class="regular-text" autocomplete="off" /></td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('SMTP Host', 'gnn-smtpmail'); ?></th>
-                        <td><input type="text" name="gnn_smtp[smtp_host]" value="<?php echo esc_attr($smtp_host); ?>"
-                                class="regular-text"></td>
+                        <th><?php esc_html_e('Şifre', 'gnn-smtpmail'); ?></th>
+                        <td><input type="password" name="password" value="<?php echo esc_attr( $c['password'] ?? '' ); ?>" class="regular-text" autocomplete="new-password" /></td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('SMTP Port', 'gnn-smtpmail'); ?></th>
-                        <td><input type="number" name="gnn_smtp[smtp_port]" value="<?php echo esc_attr($smtp_port); ?>"
-                                class="small-text"></td>
+                        <th><?php esc_html_e('Gönderen E-posta', 'gnn-smtpmail'); ?></th>
+                        <td><input type="email" name="from_email" value="<?php echo esc_attr( $c['from_email'] ?? '' ); ?>" class="regular-text" /></td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('Encryption', 'gnn-smtpmail'); ?></th>
-                        <td>
-                            <select name="gnn_smtp[smtp_secure]">
-                                <option value="" <?php selected($smtp_secure, ''); ?>><?php esc_html_e('None', 'gnn-smtpmail'); ?></option>
-                                <option value="ssl" <?php selected($smtp_secure, 'ssl'); ?>>SSL</option>
-                                <option value="tls" <?php selected($smtp_secure, 'tls'); ?>>TLS</option>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php esc_html_e('Authentication', 'gnn-smtpmail'); ?></th>
-                        <td>
-                            <label><input type="checkbox" name="gnn_smtp[smtp_auth]" value="1" <?php checked($smtp_auth); ?>>
-                                <?php esc_html_e('Enable SMTP Authentication', 'gnn-smtpmail'); ?></label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php esc_html_e('SMTP Username', 'gnn-smtpmail'); ?></th>
-                        <td><input type="text" name="gnn_smtp[smtp_user]" value="<?php echo esc_attr($smtp_user); ?>"
-                                class="regular-text"></td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php esc_html_e('SMTP Password', 'gnn-smtpmail'); ?></th>
-                        <td>
-                            <input type="password" name="gnn_smtp[smtp_pass]" value="" class="regular-text"
-                                placeholder="<?php esc_attr_e('Leave empty to keep existing password', 'gnn-smtpmail'); ?>">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php esc_html_e('Timeout (s)', 'gnn-smtpmail'); ?></th>
-                        <td><input type="number" name="gnn_smtp[timeout]" value="<?php echo esc_attr($timeout); ?>"
-                                class="small-text"></td>
+                        <th><?php esc_html_e('Gönderen Adı', 'gnn-smtpmail'); ?></th>
+                        <td><input type="text" name="from_name" value="<?php echo esc_attr( $c['from_name'] ?? '' ); ?>" class="regular-text" /></td>
                     </tr>
                 </table>
-                <p class="submit">
-                    <input type="submit" name="gnn_smtp_save_settings" id="submit" class="button button-primary"
-                        value="<?php esc_attr_e('Save Changes', 'gnn-smtpmail'); ?>">
-                </p>
+                <p><button type="submit" name="gnn_custom_save" class="button button-primary"><?php esc_html_e('Kaydet', 'gnn-smtpmail'); ?></button></p>
             </form>
         </div>
         <?php
     }
 
-    /**
-     * Save settings helper.
-     */
-    private function save_settings()
-    {
-        $input = isset($_POST['gnn_smtp']) ? $_POST['gnn_smtp'] : array();
-        $existing = get_option(self::OPTION_NAME, array());
-
-        $clean = array();
-        $clean['mailer'] = sanitize_text_field($input['mailer']);
-        $clean['from_email'] = sanitize_email($input['from_email']);
-        $clean['from_name'] = sanitize_text_field($input['from_name']);
-        $clean['smtp_host'] = sanitize_text_field($input['smtp_host']);
-        $clean['smtp_port'] = (int) $input['smtp_port'];
-        $clean['smtp_secure'] = sanitize_text_field($input['smtp_secure']);
-        $clean['smtp_auth'] = isset($input['smtp_auth']) ? true : false;
-        $clean['smtp_user'] = sanitize_text_field($input['smtp_user']);
-        $clean['timeout'] = (int) $input['timeout'];
-
-        // Password handling
-        if (!empty($input['smtp_pass'])) {
-            $clean['smtp_pass'] = sanitize_text_field($input['smtp_pass']);
-        } else {
-            $clean['smtp_pass'] = isset($existing['smtp_pass']) ? $existing['smtp_pass'] : '';
-        }
-
-        update_option(self::OPTION_NAME, $clean);
-    }
-
-    /**
-     * Render Test Mail Page.
-     */
-    public function render_test_page()
-    {
-        if (!current_user_can('manage_options')) {
-            return;
-        }
-
-        $result_msg = '';
-
-        if (isset($_POST['gnn_smtp_send_test'])) {
-            check_admin_referer(self::NONCE_ACTION);
-
-            $to = sanitize_email($_POST['test_email']);
-
-            if (is_email($to)) {
-                $subject = __('GNN SMTPMail Test', 'gnn-smtpmail');
-                $message = '<h1>' . esc_html__('It Works!', 'gnn-smtpmail') . '</h1><p>' . esc_html__('This is a test email sent from GNN SMTPMail plugin.', 'gnn-smtpmail') . '</p><p>' . sprintf(esc_html__('Time: %s', 'gnn-smtpmail'), current_time('mysql')) . '</p>';
-                $headers = array('Content-Type: text/html; charset=UTF-8');
-
-                // Result handled by logging hooks in GNN_SMTPMail, but we capture result for UI
-                $sent = wp_mail($to, $subject, $message, $headers);
-
-                if ($sent) {
-                    $result_msg = '<div class="notice notice-success is-dismissible"><p>' . sprintf(esc_html__('Test email sent successfully to %s.', 'gnn-smtpmail'), esc_html($to)) . '</p></div>';
-                } else {
-                    $result_msg = '<div class="notice notice-error is-dismissible"><p>' . esc_html__('Failed to send test email. Check the logs for details.', 'gnn-smtpmail') . '</p></div>';
-                }
-            } else {
-                $result_msg = '<div class="notice notice-warning is-dismissible"><p>' . esc_html__('Invalid email address.', 'gnn-smtpmail') . '</p></div>';
-            }
-        }
-
+    public function page_test() {
+        $s = get_option( GNN_SMTPMAIL_OPTION, array() );
+        $c = isset($s['custom']) ? $s['custom'] : array();
+        $active = ! empty( $c['enabled'] );
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e('Send Test Email', 'gnn-smtpmail'); ?></h1>
-            <?php echo $result_msg; ?>
-            <form method="post" action="">
-                <?php wp_nonce_field(self::NONCE_ACTION); ?>
-                <table class="form-table">
+            <h1><?php esc_html_e('Test Mail Gönder', 'gnn-smtpmail'); ?></h1>
+            <?php settings_errors( 'gnn-smtpmail' ); ?>
+            <p>
+            <?php if ( ! $active ) : ?>
+                <span class="notice notice-warning inline"><p><?php esc_html_e('Custom SMTP şu an devre dışı. Etkinleştirin.', 'gnn-smtpmail'); ?></p></span>
+            <?php else : ?>
+                <strong><?php esc_html_e('Aktif kanal: CUSTOM SMTP', 'gnn-smtpmail'); ?></strong>
+            <?php endif; ?>
+            </p>
+            <form method="post">
+                <?php wp_nonce_field( 'gnn_test_send_action', 'gnn_test_nonce' ); ?>
+                <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row"><?php esc_html_e('Recipient Email', 'gnn-smtpmail'); ?></th>
-                        <td>
-                            <input type="email" name="test_email"
-                                value="<?php echo esc_attr(wp_get_current_user()->user_email); ?>" class="regular-text"
-                                required>
-                        </td>
+                        <th><?php esc_html_e('Alıcı (To)', 'gnn-smtpmail'); ?></th>
+                        <td><input type="email" name="to" required class="regular-text" /></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Konu', 'gnn-smtpmail'); ?></th>
+                        <td><input type="text" name="subject" class="regular-text" value="<?php esc_attr_e('GNN SMTPMail Test', 'gnn-smtpmail'); ?>" /></td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e('Mesaj', 'gnn-smtpmail'); ?></th>
+                        <td><textarea name="message" rows="6" class="large-text"><?php esc_html_e('Bu bir test e-postasıdır. GNN SMTPMail üzerinden gönderilmiştir.', 'gnn-smtpmail'); ?></textarea></td>
                     </tr>
                 </table>
-                 </table>
-                 <p class="submit">
-                     <input type="submit" name="gnn_smtp_send_test" class="button button-primary" value="<?php esc_attr_e('Send Test Email', 'gnn-smtpmail'); ?>">
-                 </p>
-             </form>
+                <p><button type="submit" name="gnn_test_send" class="button button-primary"><?php esc_html_e('Gönder', 'gnn-smtpmail'); ?></button></p>
+            </form>
+            <hr/>
+            <p class="description"><?php esc_html_e('Gönderim sonucu "Loglar" sayfasına kaydedilir. Başarısızsa hata mesajı loglarda görünecektir.', 'gnn-smtpmail'); ?></p>
         </div>
         <?php
     }
 
-    /**
-     * Render Logs Page.
-     */
-    public function render_logs_page()
-    {
-        if (!current_user_can('manage_options')) {
-            return;
-        }
-
-        // Handle Clear
-        if (isset($_POST['gnn_smtp_clear_logs'])) {
-            check_admin_referer(self::NONCE_ACTION);
-            if (class_exists('GNN_SMTP_Logger')) {
-                GNN_SMTP_Logger::clear_all();
-                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Logs cleared.', 'gnn-smtpmail') . '</p></div>';
-            }
-        }
-
-        // Pagination & Filter
+    public function page_logs() {
         $paged = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
         $status = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
         $per_page = 20;
-
-        $logs = array('rows' => array(), 'total' => 0, 'pages' => 0);
-        if (class_exists('GNN_SMTP_Logger')) {
-            $logs = GNN_SMTP_Logger::get_logs($paged, $per_page, $status);
-        }
+        $data = GNN_SMTPMail_Logger::get_logs( $paged, $per_page, $status );
+        $rows = $data['rows'];
+        $total = $data['total'];
+        $total_pages = max(1, ceil( $total / $per_page ));
 
         ?>
         <div class="wrap">
-            <h1 class="wp-heading-inline"><?php esc_html_e('Email Logs', 'gnn-smtpmail'); ?></h1>
-            <form method="post" action="" style="display:inline-block; float:right;">
-                <?php wp_nonce_field(self::NONCE_ACTION); ?>
-                <input type="submit" name="gnn_smtp_clear_logs" class="button button-secondary" value="<?php esc_attr_e('Clear All Logs', 'gnn-smtpmail'); ?>"
-                    onclick="return confirm('<?php esc_attr_e('Are you sure?', 'gnn-smtpmail'); ?>');">
+            <h1><?php esc_html_e('E-posta Logları', 'gnn-smtpmail'); ?></h1>
+            <?php settings_errors( 'gnn-smtpmail' ); ?>
+
+            <form method="get" class="gnn-inline">
+                <input type="hidden" name="page" value="gnn-smtpmail-logs"/>
+                <label><?php esc_html_e('Durum:', 'gnn-smtpmail'); ?>
+                    <select name="status">
+                        <option value=""><?php esc_html_e('Hepsi', 'gnn-smtpmail'); ?></option>
+                        <option value="success" <?php selected($status,'success'); ?>><?php esc_html_e('Başarılı', 'gnn-smtpmail'); ?></option>
+                        <option value="error" <?php selected($status,'error'); ?>><?php esc_html_e('Hata', 'gnn-smtpmail'); ?></option>
+                    </select>
+                </label>
+                <button class="button"><?php esc_html_e('Filtrele', 'gnn-smtpmail'); ?></button>
             </form>
-            <hr class="wp-header-end">
 
-            <div class="tablenav top">
-                <div class="alignleft actions">
-                    <form method="get">
-                        <input type="hidden" name="page" value="gnn-smtpmail-logs">
-                        <select name="status">
-                            <option value=""><?php esc_html_e('All Statuses', 'gnn-smtpmail'); ?></option>
-                            <option value="sent" <?php selected($status, 'sent'); ?>><?php esc_html_e('Sent', 'gnn-smtpmail'); ?></option>
-                            <option value="failed" <?php selected($status, 'failed'); ?>><?php esc_html_e('Failed', 'gnn-smtpmail'); ?></option>
-                        </select>
-                        <input type="submit" class="button" value="<?php esc_attr_e('Filter', 'gnn-smtpmail'); ?>">
-                    </form>
-                </div>
-                <div class="tablenav-pages">
-                    <span class="displaying-num">
-                        <?php echo sprintf(esc_html__('%s items', 'gnn-smtpmail'), esc_html($logs['total'])); ?>
-                    </span>
-                    <?php
-                    $page_links = paginate_links(array(
-                        'base' => add_query_arg('paged', '%#%'),
-                        'format' => '',
-                        'prev_text' => '&laquo;',
-                        'next_text' => '&raquo;',
-                        'total' => $logs['pages'],
-                        'current' => $paged
-                    ));
-                    if ($page_links) {
-                        echo '<span class="pagination-links">' . $page_links . '</span>';
-                    }
-                    ?>
-                </div>
-            </div>
+            <form method="post" style="margin-top:10px;">
+                <?php wp_nonce_field( 'gnn_clear_logs_action', 'gnn_clear_logs_nonce' ); ?>
+                <button type="submit" name="gnn_clear_logs" class="button"><?php esc_html_e('Tüm Logları Temizle', 'gnn-smtpmail'); ?></button>
+            </form>
 
-            <table class="wp-list-table widefat fixed striped">
+            <table class="widefat striped" style="margin-top:15px;">
                 <thead>
-                    <tr>
-                        <th><?php esc_html_e('Date', 'gnn-smtpmail'); ?></th>
-                        <th><?php esc_html_e('Status', 'gnn-smtpmail'); ?></th>
-                        <th><?php esc_html_e('Subject', 'gnn-smtpmail'); ?></th>
-                        <th><?php esc_html_e('To', 'gnn-smtpmail'); ?></th>
-                        <th><?php esc_html_e('Message', 'gnn-smtpmail'); ?></th>
-                    </tr>
+                <tr>
+                    <th><?php esc_html_e('Tarih', 'gnn-smtpmail'); ?></th>
+                    <th><?php esc_html_e('Kanal', 'gnn-smtpmail'); ?></th>
+                    <th><?php esc_html_e('Alıcı', 'gnn-smtpmail'); ?></th>
+                    <th><?php esc_html_e('Konu', 'gnn-smtpmail'); ?></th>
+                    <th><?php esc_html_e('Durum', 'gnn-smtpmail'); ?></th>
+                    <th><?php esc_html_e('Mesaj', 'gnn-smtpmail'); ?></th>
+                </tr>
                 </thead>
                 <tbody>
-                    <?php if (!empty($logs['rows'])): ?>
-                        <?php foreach ($logs['rows'] as $row): ?>
-                            <tr>
-                                <td>
-                                    <?php echo esc_html($row->created_at); ?>
-                                </td>
-                                <td>
-                                    <?php if ('sent' === $row->status): ?>
-                                        <span style="color:green; font-weight:bold;"><?php esc_html_e('Sent', 'gnn-smtpmail'); ?></span>
-                                    <?php else: ?>
-                                        <span style="color:red; font-weight:bold;"><?php esc_html_e('Failed', 'gnn-smtpmail'); ?></span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <?php echo esc_html($row->subject); ?>
-                                </td>
-                                <td>
-                                    <?php echo esc_html($row->recipient); ?>
-                                </td>
-                                <td>
-                                    <?php echo esc_html(mb_strimwidth($row->message, 0, 100, '...')); ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr>
-                            <td colspan="5"><?php esc_html_e('No logs found.', 'gnn-smtpmail'); ?></td>
-                        </tr>
-                    <?php endif; ?>
+                <?php if ( $rows ) : foreach ( $rows as $row ) : ?>
+                    <tr>
+                        <td><?php echo esc_html( $row->logged_at ); ?></td>
+                        <td><?php echo esc_html( strtoupper( $row->channel ) ); ?></td>
+                        <td><?php echo esc_html( $row->recipient ); ?></td>
+                        <td><?php echo esc_html( $row->subject ); ?></td>
+                        <td><?php echo $row->status === 'success' ? '<span class="gnn-badge success">'.esc_html__('Başarılı','gnn-smtpmail').'</span>' : '<span class="gnn-badge error">'.esc_html__('Hata','gnn-smtpmail').'</span>'; ?></td>
+                        <td><?php echo esc_html( $row->message ); ?></td>
+                    </tr>
+                <?php endforeach; else: ?>
+                    <tr><td colspan="6"><?php esc_html_e('Log bulunamadı.', 'gnn-smtpmail'); ?></td></tr>
+                <?php endif; ?>
                 </tbody>
             </table>
+
+            <?php if ( $total_pages > 1 ) : ?>
+                <div class="tablenav">
+                    <div class="tablenav-pages">
+                        <?php
+                        echo paginate_links( array(
+                            'base'      => add_query_arg( array( 'paged' => '%#%', 'status' => $status ) ),
+                            'format'    => '',
+                            'prev_text' => __('« Önceki'),
+                            'next_text' => __('Sonraki »'),
+                            'total'     => $total_pages,
+                            'current'   => $paged
+                        ) );
+                        ?>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
         <?php
     }

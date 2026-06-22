@@ -1,153 +1,84 @@
 <?php
-if (!defined('ABSPATH')) {
-    exit;
-}
+if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-class GNN_SMTP_Logger
-{
+class GNN_SMTPMail_Logger {
 
-    /**
-     * Get the logger table name with prefix.
-     *
-     * @return string
-     */
-    public static function get_table_name()
-    {
+    public static function table_name() {
         global $wpdb;
-        return $wpdb->prefix . 'gnn_smtp_logs';
+        return $wpdb->prefix . GNN_SMTPMAIL_TABLE;
     }
 
-    /**
-     * Create the logs table during plugin activation.
-     */
-    public static function create_table()
-    {
+    public static function create_table() {
         global $wpdb;
-
-        $table_name = self::get_table_name();
+        $table = self::table_name();
         $charset_collate = $wpdb->get_charset_collate();
 
-        $sql = "CREATE TABLE $table_name (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			channel varchar(50) NOT NULL DEFAULT 'smtp',
-			recipient text NOT NULL,
-			subject text NOT NULL,
-			status varchar(50) NOT NULL DEFAULT 'sent',
-			message longtext NOT NULL,
-			context longtext,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
-			PRIMARY KEY  (id),
-			KEY status (status)
-		) $charset_collate;";
+        $sql = "CREATE TABLE $table (
+            id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            logged_at DATETIME NOT NULL,
+            channel VARCHAR(20) NOT NULL,
+            recipient TEXT NOT NULL,
+            subject TEXT NULL,
+            status VARCHAR(20) NOT NULL,
+            message TEXT NULL,
+            PRIMARY KEY  (id),
+            KEY status (status),
+            KEY channel (channel),
+            KEY logged_at (logged_at)
+        ) $charset_collate;";
 
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-        dbDelta($sql);
+        dbDelta( $sql );
     }
 
-    /**
-     * Drop the logs table.
-     */
-    public static function drop_table()
-    {
+    public static function insert( $channel, $recipient, $subject, $status, $message = '' ) {
+        if ( ! in_array( $status, array( 'success', 'error' ), true ) ) {
+            $status = 'error';
+        }
         global $wpdb;
-        $table_name = self::get_table_name();
-        $wpdb->query("DROP TABLE IF EXISTS $table_name");
-    }
-
-    /**
-     * Clear all log entries.
-     */
-    public static function clear_all()
-    {
-        global $wpdb;
-        $table_name = self::get_table_name();
-        $wpdb->query("TRUNCATE TABLE $table_name");
-    }
-
-    /**
-     * Insert a new log entry.
-     *
-     * @param string $channel   The sending channel (e.g., 'smtp', 'mail').
-     * @param string|array $recipient Recipient email(s).
-     * @param string $subject   Email subject.
-     * @param string $status    Status string (e.g., 'success', 'failed').
-     * @param string $message   Error message or debug info.
-     * @param array  $context   Additional context data.
-     * @return int|false The number of rows inserted, or false on error.
-     */
-    public static function insert($channel, $recipient, $subject, $status, $message, $context = array())
-    {
-        global $wpdb;
-        $table_name = self::get_table_name();
-
-        $recipient_str = is_array($recipient) ? implode(', ', $recipient) : (string) $recipient;
-
-        $data = array(
-            'channel' => $channel,
-            'recipient' => $recipient_str,
-            'subject' => $subject,
-            'status' => $status,
-            'message' => $message,
-            'context' => wp_json_encode($context),
-            'created_at' => current_time('mysql'),
+        $table = self::table_name();
+        $wpdb->insert(
+            $table,
+            array(
+                'logged_at' => current_time( 'mysql' ),
+                'channel'   => sanitize_text_field( $channel ),
+                'recipient' => sanitize_textarea_field( is_array($recipient) ? implode(',', array_map('sanitize_text_field', $recipient)) : $recipient ),
+                'subject'   => sanitize_textarea_field( (string) $subject ),
+                'status'    => sanitize_text_field( $status ),
+                'message'   => sanitize_textarea_field( (string) $message ),
+            ),
+            array( '%s', '%s', '%s', '%s', '%s', '%s' )
         );
-
-        $format = array(
-            '%s', // channel
-            '%s', // recipient
-            '%s', // subject
-            '%s', // status
-            '%s', // message
-            '%s', // context
-            '%s', // created_at
-        );
-
-        return $wpdb->insert($table_name, $data, $format);
     }
 
-    /**
-     * Retrieve logs with pagination and filtering.
-     *
-     * @param int    $paged    Current page number.
-     * @param int    $per_page Number of items per page.
-     * @param string $status   Optional status to filter by.
-     * @return array Array containing 'rows', 'total', and 'pages'.
-     */
-    public static function get_logs($paged = 1, $per_page = 20, $status = '')
-    {
+    public static function clear_all() {
         global $wpdb;
-        $table_name = self::get_table_name();
+        $table = self::table_name();
+        $wpdb->query( "TRUNCATE TABLE $table" );
+    }
 
-        $offset = ($paged - 1) * $per_page;
-        $where_clauses = array('1=1');
-        $query_args = array();
+    public static function get_logs( $paged = 1, $per_page = 20, $status = '' ) {
+        global $wpdb;
+        $table = self::table_name();
+        $offset = max(0, ( $paged - 1 ) * $per_page );
 
-        if (!empty($status)) {
-            $where_clauses[] = 'status = %s';
-            $query_args[] = $status;
+        $where = '1=1';
+        $params = array();
+        if ( in_array( $status, array( 'success', 'error' ), true ) ) {
+            $where .= ' AND status = %s';
+            $params[] = $status;
         }
 
-        $where_sql = implode(' AND ', $where_clauses);
+        $total = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE $where", $params ) );
 
-        // Count total
-        $count_sql = "SELECT COUNT(*) FROM $table_name WHERE $where_sql";
-        if (!empty($query_args)) {
-            $total = $wpdb->get_var($wpdb->prepare($count_sql, $query_args));
-        } else {
-            $total = $wpdb->get_var($count_sql);
-        }
+        $query = "SELECT * FROM $table WHERE $where ORDER BY id DESC LIMIT %d OFFSET %d";
+        $params2 = array_merge( $params, array( $per_page, $offset ) );
+        $rows = $wpdb->get_results( $wpdb->prepare( $query, $params2 ) );
+        return array( 'rows' => $rows, 'total' => intval($total) );
+    }
 
-        // Get rows
-        $sql = "SELECT * FROM $table_name WHERE $where_sql ORDER BY created_at DESC LIMIT %d OFFSET %d";
-        $query_args[] = $per_page;
-        $query_args[] = $offset;
-
-        $rows = $wpdb->get_results($wpdb->prepare($sql, $query_args));
-
-        return array(
-            'rows' => $rows,
-            'total' => (int) $total,
-            'pages' => ceil($total / $per_page),
-        );
+    public static function drop_table() {
+        global $wpdb;
+        $table = self::table_name();
+        $wpdb->query( "DROP TABLE IF EXISTS $table" );
     }
 }
