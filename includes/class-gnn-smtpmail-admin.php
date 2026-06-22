@@ -97,9 +97,10 @@ class GNN_SMTPMail_Admin {
                 return;
             }
 
-            add_filter( 'wp_mail_content_type', function() { return 'text/html'; } );
+            $html_filter = function() { return 'text/html'; };
+            add_filter( 'wp_mail_content_type', $html_filter );
             $sent = wp_mail( $to, $subject, wpautop( $message ) );
-            remove_filter( 'wp_mail_content_type', '__return_false' );
+            remove_filter( 'wp_mail_content_type', $html_filter );
 
             if ( $sent ) {
                 add_settings_error( 'gnn-smtpmail', 'test_ok', __( 'Test e-postası başarıyla gönderildi. Logları kontrol edebilirsiniz.', 'gnn-smtpmail' ), 'updated' );
