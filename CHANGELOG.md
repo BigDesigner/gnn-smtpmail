@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2026-06-23
+
+### Fixed
+- Database auto-migration logic: Fixed missing `dbDelta` dependency and added checks on constructor initialization to ensure custom log table is created dynamically even when deactivation/reactivation is skipped during updates.
+
 ## [1.3.0] - 2026-06-23
 
 ### Added

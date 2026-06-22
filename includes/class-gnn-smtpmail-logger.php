@@ -27,6 +27,9 @@ class GNN_SMTPMail_Logger {
             KEY logged_at (logged_at)
         ) $charset_collate;";
 
+        if ( ! function_exists( 'dbDelta' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        }
         dbDelta( $sql );
     }
 

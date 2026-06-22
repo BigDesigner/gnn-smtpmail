@@ -52,6 +52,12 @@ class GNN_SMTPMail {
     }
 
     public function __construct() {
+        // Auto-run DB creation if version changed (e.g. plugin updated via git/updater)
+        $db_version = get_option( 'gnn_smtpmail_db_version', '' );
+        if ( $db_version !== GNN_SMTPMAIL_VERSION ) {
+            GNN_SMTPMail_Logger::create_table();
+            update_option( 'gnn_smtpmail_db_version', GNN_SMTPMAIL_VERSION );
+        }
 
         // Admin UI
         if ( is_admin() ) {

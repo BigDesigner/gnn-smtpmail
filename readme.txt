@@ -2,7 +2,7 @@
 Contributors: GNN
 Requires at least: 5.2
 Tested up to: 6.6
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ YALNIZCA Custom SMTP ile WordPress e-postalarını güvenle gönderin. Test mail
 3. Yönetim panelinde **GNN SMTPMail → Custom SMTP** bölümünden ayarlarınızı yapın.
 
 == Değişiklikler ==
+= 1.3.1 =
+* Veri tabanı log tablosunun otomatik kurulumu ve dbDelta bağımlılıkları düzeltildi.
+
 = 1.3.0 =
 * Brevo API entegrasyonu geri getirildi. Kullanıcılar artık Custom SMTP veya Brevo API arasında seçim yapabilirler.
 
