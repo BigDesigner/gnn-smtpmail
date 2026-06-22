@@ -23,3 +23,12 @@
 ## 6. Plugin Updates
 - **Decision:** GitHub-based manual/automatic updater.
 - **Rationale:** Allows for direct distribution and version control without the constraints of the official WordPress.org repository, while maintaining a seamless update experience for users.
+
+## 7. Direct Logging in Short-Circuited Deliveries (Brevo API)
+- **Decision:** Log outcomes directly inside `pre_wp_mail_handler` instead of relying entirely on standard hook propagation.
+- **Rationale:** Because `pre_wp_mail` filter short-circuits `wp_mail()`, hook actions like `wp_mail_succeeded` can be bypassed by third-party overrides or early aborts. Calling the logger directly at the API source ensures robust logging of Brevo mailings, while duplicate entries are prevented by ignoring Brevo mail types in standard hook callbacks.
+
+## 8. Pluggable Function Conflict Detection (Reflection API)
+- **Decision:** Use PHP's Reflection API to detect the file defining `wp_mail()`.
+- **Rationale:** If another SMTP plugin is active, it overrides the pluggable `wp_mail()` function, bypassing GNN SMTPMail entirely. Using `ReflectionFunction` to trace where the function is defined allows us to warn the administrator via an admin notice about conflicts.
+
