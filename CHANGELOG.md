@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.2] - 2026-06-23
+
+### Added
+- Integrated Reflection-based wp_mail() function definition source checker to alert users of plugin/theme conflicts hijacking email flows.
+- Added comprehensive error_log debug traces across all handlers to assist in deep-inspection of mailing pipelines.
+
 ## [1.4.1] - 2026-06-23
 
 ### Fixed

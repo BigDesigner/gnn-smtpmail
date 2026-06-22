@@ -39,6 +39,10 @@ class GNN_SMTPMail_Logger {
         }
         global $wpdb;
         $table = self::table_name();
+        
+        $rec_str = is_array($recipient) ? implode(',', $recipient) : $recipient;
+        error_log( sprintf( 'GNN Logger - Inserting: Table=%s, Channel=%s, Recipient=%s, Subject=%s, Status=%s', $table, $channel, $rec_str, $subject, $status ) );
+
         $inserted = $wpdb->insert(
             $table,
             array(
@@ -52,8 +56,10 @@ class GNN_SMTPMail_Logger {
             array( '%s', '%s', '%s', '%s', '%s', '%s' )
         );
         if ( false === $inserted ) {
+            error_log( 'GNN Logger - Insert Failed: ' . $wpdb->last_error );
             update_option( 'gnn_smtpmail_last_insert_error', $wpdb->last_error );
         } else {
+            error_log( 'GNN Logger - Insert Succeeded. Row ID: ' . $wpdb->insert_id );
             delete_option( 'gnn_smtpmail_last_insert_error' );
         }
     }

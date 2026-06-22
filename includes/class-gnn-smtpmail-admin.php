@@ -377,10 +377,28 @@ class GNN_SMTPMail_Admin {
                 $table = $wpdb->prefix . GNN_SMTPMAIL_TABLE;
                 $show_table = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) );
                 $table_exists = ! empty( $show_table ) && strcasecmp( $show_table, $table ) === 0;
+
+                $wp_mail_defined_in = 'unknown';
+                try {
+                    $reflector = new ReflectionFunction('wp_mail');
+                    $wp_mail_defined_in = $reflector->getFileName();
+                    $wp_mail_defined_in = str_replace( wp_normalize_path( ABSPATH ), '', wp_normalize_path( $wp_mail_defined_in ) );
+                } catch ( Exception $e ) {
+                    $wp_mail_defined_in = 'Error: ' . $e->getMessage();
+                }
+
                 echo '<div class="notice notice-info inline" style="margin-top:10px;"><p>';
                 if ($table_exists) {
                     $count = $wpdb->get_var("SELECT COUNT(*) FROM $table");
                     echo '<strong>Sistem Bilgisi:</strong> Log tablosu aktif. Toplam log satırı: ' . intval($count) . ' | <a href="' . esc_url( admin_url('admin.php?page=gnn-smtpmail-logs&gnn_test_log=1') ) . '">' . esc_html__('Veritabanı Log Yazmasını Test Et', 'gnn-smtpmail') . '</a><br>';
+                    
+                    echo '<strong>wp_mail() Kaynağı:</strong> ';
+                    if ( strpos( $wp_mail_defined_in, 'wp-includes/pluggable.php' ) !== false ) {
+                        echo '<span style="color:#2ec4b6;">wp-includes/pluggable.php (Çekirdek - Uyumlu)</span><br>';
+                    } else {
+                        echo '<span style="color:#d63638; font-weight:bold;">' . esc_html( $wp_mail_defined_in ) . ' (Çakışma! Başka bir eklenti wp_mail() fonksiyonunu ele geçirmiş durumda. Bizim eklentimiz pasif kalacaktır.)</span><br>';
+                    }
+                    
                     $last_insert_error = get_option( 'gnn_smtpmail_last_insert_error', '' );
                     if ( ! empty( $last_insert_error ) ) {
                         echo '<strong style="color:#d63638;">Son Log Kayıt Hatası:</strong> ' . esc_html( $last_insert_error ) . '<br>';
