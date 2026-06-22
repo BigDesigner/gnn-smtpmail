@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.3] - 2026-06-23
+
+### Added
+- Integrated dynamic conflict checking mechanism. If another plugin or custom code overrides the pluggable `wp_mail()` function, GNN SMTPMail will display a prominent admin notice on all admin pages to notify the administrator.
+
 ## [1.4.2] - 2026-06-23
 
 ### Added

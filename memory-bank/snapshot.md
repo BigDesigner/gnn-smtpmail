@@ -1,9 +1,9 @@
 # Project Snapshot: GNN SMTPMail
 
 ## Project Status
-- **Current Version:** 1.4.2
+- **Current Version:** 1.4.3
 - **Last Sync:** 2026-06-23
-- **Status:** Production Ready / Debugging and Conflicts Check Implemented
+- **Status:** Production Ready / Conflict Checking Notice Added
 
 ## Core Functionality
 - Dual sending channels: Custom SMTP or Brevo API (dynamic selection).
@@ -25,6 +25,7 @@
 - `assets/admin.js`: Dynamic settings section toggling between Custom SMTP and Brevo.
 
 ## Recent Changes
+- **v1.4.3:** Added global admin notices for wp_mail conflicts.
 - **v1.4.2:** Added Reflection-based wp_mail() conflict detector and detailed error_log tracing across all mail flow functions.
 - **v1.4.1:** Fixed log visibility issues with case-insensitive table existence check and direct Brevo sending logging. Added manual DB test logging action on diagnostic bar.
 - **v1.4.0:** Integrated Brevo Senders API to display verified senders dropdown, avoiding manual sender inputs.

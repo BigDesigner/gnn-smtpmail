@@ -7,6 +7,7 @@ class GNN_SMTPMail_Admin {
         add_action( 'admin_menu', array( $this, 'admin_menu' ) );
         add_action( 'admin_init', array( $this, 'maybe_save_forms' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
+        add_action( 'admin_notices', array( $this, 'check_mail_conflict_notice' ) );
     }
 
     public function assets( $hook ) {
@@ -476,5 +477,32 @@ class GNN_SMTPMail_Admin {
             <?php endif; ?>
         </div>
         <?php
+    }
+
+    /**
+     * Display a prominent admin notice if wp_mail is hijacked by another plugin.
+     */
+    public function check_mail_conflict_notice() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return;
+        }
+
+        try {
+            $reflector = new ReflectionFunction('wp_mail');
+            $file = $reflector->getFileName();
+            $file = str_replace( wp_normalize_path( ABSPATH ), '', wp_normalize_path( $file ) );
+            
+            if ( strpos( $file, 'wp-includes/pluggable.php' ) === false ) {
+                echo '<div class="notice notice-error is-dismissible">';
+                echo '<p><strong>' . esc_html__( 'GNN SMTPMail Çakışma Uyarısı:', 'gnn-smtpmail' ) . '</strong><br>';
+                echo sprintf(
+                    esc_html__( '`wp_mail()` fonksiyonu başka bir eklenti veya dosya tarafından tanımlanmış: %s. Bu durum, e-postalarınızın GNN SMTPMail (Brevo veya Custom SMTP) üzerinden gitmesini ve loglanmasını engellemektedir. Lütfen çakışan e-posta/SMTP eklentilerini devre dışı bırakın.', 'gnn-smtpmail' ),
+                    '<code>' . esc_html( $file ) . '</code>'
+                );
+                echo '</p></div>';
+            }
+        } catch ( Exception $e ) {
+            // Silence
+        }
     }
 }
