@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.2] - 2026-06-23
+
+### Fixed
+- Fixed dbDelta SQL syntax parser bugs by converting SQL field types to all lowercase as strictly required by WordPress `dbDelta` standards.
+- Strengthened db auto-migration by checking physical database table existence rather than just relying on version strings.
+
 ## [1.3.1] - 2026-06-23
 
 ### Fixed

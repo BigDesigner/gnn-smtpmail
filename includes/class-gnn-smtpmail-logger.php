@@ -14,13 +14,13 @@ class GNN_SMTPMail_Logger {
         $charset_collate = $wpdb->get_charset_collate();
 
         $sql = "CREATE TABLE $table (
-            id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-            logged_at DATETIME NOT NULL,
-            channel VARCHAR(20) NOT NULL,
-            recipient TEXT NOT NULL,
-            subject TEXT NULL,
-            status VARCHAR(20) NOT NULL,
-            message TEXT NULL,
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            logged_at datetime NOT NULL,
+            channel varchar(20) NOT NULL,
+            recipient text NOT NULL,
+            subject text NULL,
+            status varchar(20) NOT NULL,
+            message text NULL,
             PRIMARY KEY  (id),
             KEY status (status),
             KEY channel (channel),

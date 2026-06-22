@@ -52,9 +52,13 @@ class GNN_SMTPMail {
     }
 
     public function __construct() {
-        // Auto-run DB creation if version changed (e.g. plugin updated via git/updater)
+        // Auto-run DB creation if version changed or table is missing (e.g. plugin updated via git/updater)
+        global $wpdb;
+        $table = $wpdb->prefix . GNN_SMTPMAIL_TABLE;
+        $table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) ) === $table;
+
         $db_version = get_option( 'gnn_smtpmail_db_version', '' );
-        if ( $db_version !== GNN_SMTPMAIL_VERSION ) {
+        if ( ! $table_exists || $db_version !== GNN_SMTPMAIL_VERSION ) {
             GNN_SMTPMail_Logger::create_table();
             update_option( 'gnn_smtpmail_db_version', GNN_SMTPMAIL_VERSION );
         }
