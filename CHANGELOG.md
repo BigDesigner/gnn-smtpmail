@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.4] - 2026-06-23
+
+### Added
+- Added a diagnostic warning/status block to the top of the Email Logs page to show active DB table status, row counts, and the last database errors.
+
 ## [1.3.3] - 2026-06-23
 
 ### Changed

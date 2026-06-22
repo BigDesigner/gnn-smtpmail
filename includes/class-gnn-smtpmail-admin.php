@@ -277,6 +277,24 @@ class GNN_SMTPMail_Admin {
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('E-posta Logları', 'gnn-smtpmail'); ?></h1>
+            <?php
+            if ( current_user_can('manage_options') ) {
+                global $wpdb;
+                $table = $wpdb->prefix . GNN_SMTPMAIL_TABLE;
+                $table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) ) === $table;
+                echo '<div class="notice notice-info inline" style="margin-top:10px;"><p>';
+                if ($table_exists) {
+                    $count = $wpdb->get_var("SELECT COUNT(*) FROM $table");
+                    echo '<strong>Sistem Bilgisi:</strong> Log tablosu aktif. Toplam log satırı: ' . intval($count) . '<br>';
+                    if ( ! empty($wpdb->last_error) ) {
+                        echo 'Son Veri Tabanı Hatası: ' . esc_html($wpdb->last_error);
+                    }
+                } else {
+                    echo '<strong>Sistem Hatası:</strong> `' . esc_html($table) . '` tablosu veri tabanında bulunamadı!';
+                }
+                echo '</p></div>';
+            }
+            ?>
             <?php settings_errors( 'gnn-smtpmail' ); ?>
 
             <form method="get" class="gnn-inline">
