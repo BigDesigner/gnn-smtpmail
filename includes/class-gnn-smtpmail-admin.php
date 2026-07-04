@@ -372,14 +372,7 @@ class GNN_SMTPMail_Admin {
                 $show_table = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) );
                 $table_exists = ! empty( $show_table ) && strcasecmp( $show_table, $table ) === 0;
 
-                $wp_mail_defined_in = 'unknown';
-                try {
-                    $reflector = new ReflectionFunction('wp_mail');
-                    $wp_mail_defined_in = $reflector->getFileName();
-                    $wp_mail_defined_in = str_replace( wp_normalize_path( ABSPATH ), '', wp_normalize_path( $wp_mail_defined_in ) );
-                } catch ( Exception $e ) {
-                    $wp_mail_defined_in = 'Error: ' . $e->getMessage();
-                }
+                $wp_mail_defined_in = $this->get_wp_mail_source();
 
                 $has_conflict = strpos( $wp_mail_defined_in, 'wp-includes/pluggable.php' ) === false;
                 $last_insert_error = get_option( 'gnn_smtpmail_last_insert_error', '' );
@@ -487,10 +480,8 @@ class GNN_SMTPMail_Admin {
             return;
         }
 
-        try {
-            $reflector = new ReflectionFunction('wp_mail');
-            $file = $reflector->getFileName();
-            $file = str_replace( wp_normalize_path( ABSPATH ), '', wp_normalize_path( $file ) );
+        $file = $this->get_wp_mail_source();
+        if ( empty( $file ) ) { return; }
             
             if ( strpos( $file, 'wp-includes/pluggable.php' ) === false ) {
                 echo '<div class="notice notice-error is-dismissible">';
@@ -503,6 +494,21 @@ class GNN_SMTPMail_Admin {
             }
         } catch ( Exception $e ) {
             // Silence
+        }
+    }
+
+    /**
+     * Get the file where wp_mail() is defined (relative to ABSPATH).
+     *
+     * @return string Relative file path or empty string on failure.
+     */
+    private function get_wp_mail_source() {
+        try {
+            $reflector = new ReflectionFunction( 'wp_mail' );
+            $file = wp_normalize_path( $reflector->getFileName() );
+            return str_replace( wp_normalize_path( ABSPATH ), '', $file );
+        } catch ( Exception $e ) {
+            return '';
         }
     }
 }
