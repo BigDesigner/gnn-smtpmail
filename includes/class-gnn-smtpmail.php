@@ -164,7 +164,9 @@ class GNN_SMTPMail {
     public function pre_wp_mail_handler( $null, $atts ) {
         $s = $this->get_settings();
         $mailer_type = isset( $s['mailer_type'] ) ? $s['mailer_type'] : 'custom';
-        error_log( 'GNN SMTPMail - pre_wp_mail_handler triggered. Mailer Type: ' . $mailer_type );
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( 'GNN SMTPMail - pre_wp_mail_handler triggered. Mailer Type: ' . $mailer_type );
+        }
         if ( $mailer_type !== 'brevo' ) {
             return $null; // Use default / PHPMailer SMTP
         }
@@ -303,7 +305,9 @@ class GNN_SMTPMail {
         ) );
 
         if ( is_wp_error( $response ) ) {
-            error_log( 'GNN SMTPMail - wp_remote_post returned WP_Error: ' . $response->get_error_message() );
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                error_log( 'GNN SMTPMail - wp_remote_post returned WP_Error: ' . $response->get_error_message() );
+            }
             GNN_SMTPMail_Logger::insert( 'brevo', $to, $subject, 'error', $response->get_error_message() );
             do_action( 'wp_mail_failed', $response );
             return false;
@@ -311,12 +315,16 @@ class GNN_SMTPMail {
 
         $code = wp_remote_retrieve_response_code( $response );
         $response_body = wp_remote_retrieve_body( $response );
-        error_log( 'GNN SMTPMail - Brevo response code: ' . $code );
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( 'GNN SMTPMail - Brevo response code: ' . $code );
+        }
 
         if ( $code !== 201 ) {
             $decoded = json_decode( $response_body, true );
             $msg = isset( $decoded['message'] ) ? $decoded['message'] : __( 'Brevo API error', 'gnn-smtpmail' );
-            error_log( 'GNN SMTPMail - Brevo non-201 response body: ' . $response_body );
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                error_log( 'GNN SMTPMail - Brevo non-201 response body: ' . $response_body );
+            }
             $error = new WP_Error( 'brevo_api_failed', sprintf( __( 'Brevo API Error (HTTP %d): %s', 'gnn-smtpmail' ), $code, $msg ) );
             GNN_SMTPMail_Logger::insert( 'brevo', $to, $subject, 'error', $error->get_error_message() );
             do_action( 'wp_mail_failed', $error );
@@ -324,7 +332,9 @@ class GNN_SMTPMail {
         }
 
         // Succeeded
-        error_log( 'GNN SMTPMail - Brevo API successful send. Inserting success log.' );
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( 'GNN SMTPMail - Brevo API successful send. Inserting success log.' );
+        }
         GNN_SMTPMail_Logger::insert( 'brevo', $to, $subject, 'success', 'OK' );
 
         $mail_data = array(
@@ -340,7 +350,9 @@ class GNN_SMTPMail {
     }
 
     public function on_mail_failed( $wp_error ) {
-        error_log( 'GNN SMTPMail - on_mail_failed hook triggered: ' . $wp_error->get_error_message() );
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( 'GNN SMTPMail - on_mail_failed hook triggered: ' . $wp_error->get_error_message() );
+        }
         $s = $this->get_settings();
         $channel = isset( $s['mailer_type'] ) ? $s['mailer_type'] : 'custom';
         if ( $channel === 'brevo' ) {
@@ -354,7 +366,9 @@ class GNN_SMTPMail {
     }
 
     public function on_mail_succeeded( $mail_data ) {
-        error_log( 'GNN SMTPMail - on_mail_succeeded hook triggered.' );
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( 'GNN SMTPMail - on_mail_succeeded hook triggered.' );
+        }
         $s = $this->get_settings();
         $channel = isset( $s['mailer_type'] ) ? $s['mailer_type'] : 'custom';
         if ( $channel === 'brevo' ) {
