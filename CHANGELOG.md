@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-07-04
+
+### Fixed
+- [KRİTİK-01] Wrapped all error_log() calls in WP_DEBUG guard to prevent sensitive data exposure in production logs.
+- [GÜV-01] Escaped table name in admin raw SQL query using esc_sql().
+- [GÜV-02] Added semver validation and GitHub domain whitelist to updater download URL.
+- [KAL-02] Fixed empty $params edge case in get_logs() prepare calls.
+- [KAL-03] Eliminated duplicate ReflectionFunction code via get_wp_mail_source() private method.
+
 ## [1.4.4] - 2026-06-23
 
 ### Changed
