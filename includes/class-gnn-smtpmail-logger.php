@@ -88,10 +88,14 @@ class GNN_SMTPMail_Logger {
             $params[] = $status;
         }
 
-        $total = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE $where", $params ) );
+        if ( empty( $params ) ) {
+            $total = $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}` WHERE {$where}" );
+        } else {
+            $total = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM `{$table}` WHERE {$where}", $params ) );
+        }
 
-        $query = "SELECT * FROM $table WHERE $where ORDER BY id DESC LIMIT %d OFFSET %d";
-        $params2 = array_merge( $params, array( $per_page, $offset ) );
+        $params2 = array_merge( $params, array( (int) $per_page, (int) $offset ) );
+        $query = "SELECT * FROM `{$table}` WHERE {$where} ORDER BY id DESC LIMIT %d OFFSET %d";
         $rows = $wpdb->get_results( $wpdb->prepare( $query, $params2 ) );
         return array( 'rows' => $rows, 'total' => intval($total) );
     }
