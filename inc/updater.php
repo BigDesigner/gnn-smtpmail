@@ -113,6 +113,18 @@ class GNN_SMTPMail_Updater
             $download_url = $body->zipball_url;
         }
 
+        // Validate version string (semver: X.Y.Z)
+        if ( ! preg_match( '/^\d+\.\d+\.\d+$/', $remote_version ) ) {
+            return false;
+        }
+
+        // Validate download URL is from github.com
+        $parsed = wp_parse_url( $download_url );
+        if ( empty( $parsed['host'] ) || ! in_array( $parsed['host'], array( 'github.com', 'codeload.github.com' ), true ) ) {
+            return false;
+        }
+        $download_url = esc_url_raw( $download_url );
+
         $release_data = (object) array(
             'version'      => $remote_version,
             'download_url' => $download_url,
