@@ -390,7 +390,7 @@ class GNN_SMTPMail_Admin {
                 if ( $has_issue ) {
                     echo '<div class="notice notice-info inline" style="margin-top:10px;"><p>';
                     if ($table_exists) {
-                        $count = $wpdb->get_var("SELECT COUNT(*) FROM $table");
+                        $count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `" . esc_sql( $table ) . "`" );
                         echo '<strong>Sistem Bilgisi:</strong> Log tablosu aktif. Toplam log satırı: ' . intval($count) . '<br>';
                         
                         echo '<strong>wp_mail() Kaynağı:</strong> ';
