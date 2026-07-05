@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.1] - 2026-07-05
+
+### Fixed
+- Fixed fatal syntax error caused by a leftover catch block without a matching try block in the `check_mail_conflict_notice` function.
+
 ## [1.5.0] - 2026-07-04
 
 ### Fixed

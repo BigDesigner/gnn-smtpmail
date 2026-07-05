@@ -483,17 +483,14 @@ class GNN_SMTPMail_Admin {
         $file = $this->get_wp_mail_source();
         if ( empty( $file ) ) { return; }
             
-            if ( strpos( $file, 'wp-includes/pluggable.php' ) === false ) {
-                echo '<div class="notice notice-error is-dismissible">';
-                echo '<p><strong>' . esc_html__( 'GNN SMTPMail Çakışma Uyarısı:', 'gnn-smtpmail' ) . '</strong><br>';
-                echo sprintf(
-                    esc_html__( '`wp_mail()` fonksiyonu başka bir eklenti veya dosya tarafından tanımlanmış: %s. Bu durum, e-postalarınızın GNN SMTPMail (Brevo veya Custom SMTP) üzerinden gitmesini ve loglanmasını engellemektedir. Lütfen çakışan e-posta/SMTP eklentilerini devre dışı bırakın.', 'gnn-smtpmail' ),
-                    '<code>' . esc_html( $file ) . '</code>'
-                );
-                echo '</p></div>';
-            }
-        } catch ( Exception $e ) {
-            // Silence
+        if ( strpos( $file, 'wp-includes/pluggable.php' ) === false ) {
+            echo '<div class="notice notice-error is-dismissible">';
+            echo '<p><strong>' . esc_html__( 'GNN SMTPMail Çakışma Uyarısı:', 'gnn-smtpmail' ) . '</strong><br>';
+            echo sprintf(
+                esc_html__( '`wp_mail()` fonksiyonu başka bir eklenti veya dosya tarafından tanımlanmış: %s. Bu durum, e-postalarınızın GNN SMTPMail (Brevo veya Custom SMTP) üzerinden gitmesini ve loglanmasını engellemektedir. Lütfen çakışan e-posta/SMTP eklentilerini devre dışı bırakın.', 'gnn-smtpmail' ),
+                '<code>' . esc_html( $file ) . '</code>'
+            );
+            echo '</p></div>';
         }
     }
 
