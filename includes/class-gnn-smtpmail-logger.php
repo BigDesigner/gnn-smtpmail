@@ -13,7 +13,7 @@ class GNN_SMTPMail_Logger {
         $table = self::table_name();
         $charset_collate = $wpdb->get_charset_collate();
 
-        $sql = "CREATE TABLE $table (
+        $sql = "CREATE TABLE `" . esc_sql( $table ) . "` (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             logged_at datetime NOT NULL,
             channel varchar(20) NOT NULL,
@@ -73,7 +73,7 @@ class GNN_SMTPMail_Logger {
     public static function clear_all() {
         global $wpdb;
         $table = self::table_name();
-        $wpdb->query( "TRUNCATE TABLE $table" );
+        $wpdb->query( "TRUNCATE TABLE `" . esc_sql( $table ) . "`" );
     }
 
     public static function get_logs( $paged = 1, $per_page = 20, $status = '' ) {
@@ -103,6 +103,6 @@ class GNN_SMTPMail_Logger {
     public static function drop_table() {
         global $wpdb;
         $table = self::table_name();
-        $wpdb->query( "DROP TABLE IF EXISTS $table" );
+        $wpdb->query( "DROP TABLE IF EXISTS `" . esc_sql( $table ) . "`" );
     }
 }

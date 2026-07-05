@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.2] - 2026-07-06
+
+### Fixed
+- [YÜK-01] Escaped table names using `esc_sql()` and backticks in logger database queries (`CREATE TABLE`, `TRUNCATE TABLE`, `DROP TABLE`).
+- [YÜK-02] Escaped table name in `uninstall.php` using `esc_sql()` and backticks.
+- [ORT-04] Added path traversal verification to `file_get_contents()` for mail attachments to restrict them to `ABSPATH`.
+- [ORT-03] Hardened transient cache key generation using `wp_hash()` instead of simple MD5.
+- [DÜŞ-01] Fixed SMTP password saving issue by removing `sanitize_text_field()` which stripped special characters from passwords.
+- [DÜŞ-03] Escaped admin action links using `esc_url()` in `gnn-smtpmail.php`.
+
 ## [1.5.1] - 2026-07-05
 
 ### Fixed

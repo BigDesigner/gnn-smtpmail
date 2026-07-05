@@ -279,12 +279,16 @@ class GNN_SMTPMail {
         if ( ! empty( $attachments ) ) {
             $brevo_attachments = array();
             foreach ( $attachments as $attachment ) {
-                if ( file_exists( $attachment ) ) {
-                    $file_content = file_get_contents( $attachment );
-                    $brevo_attachments[] = array(
-                        'content' => base64_encode( $file_content ),
-                        'name'    => basename( $attachment ),
-                    );
+                $real_path = realpath( $attachment );
+                if ( false !== $real_path && file_exists( $real_path ) && is_file( $real_path ) ) {
+                    $abspath_real = realpath( ABSPATH );
+                    if ( 0 === strpos( $real_path, $abspath_real ) ) {
+                        $file_content = file_get_contents( $real_path );
+                        $brevo_attachments[] = array(
+                            'content' => base64_encode( $file_content ),
+                            'name'    => basename( $real_path ),
+                        );
+                    }
                 }
             }
             if ( ! empty( $brevo_attachments ) ) {

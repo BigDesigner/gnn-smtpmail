@@ -3,7 +3,7 @@
  * Plugin Name: GNN SMTPMail
  * Plugin URI:  https://github.com/BigDesigner/gnn-smtpmail
  * Description: Custom SMTP ile WordPress e-posta gönderimini güvenli şekilde yapılandırın. Test e-postası gönderin, hata/success loglarını görüntüleyin ve kaldırırken tüm verileri temizleyin.
- * Version: 1.5.1
+ * Version: 1.5.2
  * Author:      BigDesigner
  * Author URI:  https://github.com/BigDesigner
  * Text Domain: gnn-smtpmail
@@ -11,7 +11,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'GNN_SMTPMAIL_VERSION', '1.5.1' );
+define( 'GNN_SMTPMAIL_VERSION', '1.5.2' );
 define( 'GNN_SMTPMAIL_FILE', __FILE__ );
 define( 'GNN_SMTPMAIL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GNN_SMTPMAIL_URL', plugin_dir_url( __FILE__ ) );
@@ -32,8 +32,8 @@ add_action( 'plugins_loaded', array( 'GNN_SMTPMail', 'instance' ) );
  * Add plugin action links
  */
 function gnn_smtpmail_plugin_links( $links ) {
-    $donate_link = '<a href="https://buymeacoffee.com/bigdesigner" target="_blank" style="font-weight:bold; color:#d63638;">' . esc_html__( 'Donate', 'gnn-smtpmail' ) . '</a>';
-    $settings_link = '<a href="' . admin_url( 'admin.php?page=gnn-smtpmail-custom' ) . '">' . esc_html__( 'Settings', 'gnn-smtpmail' ) . '</a>';
+    $donate_link = '<a href="' . esc_url( 'https://buymeacoffee.com/bigdesigner' ) . '" target="_blank" style="font-weight:bold; color:#d63638;">' . esc_html__( 'Donate', 'gnn-smtpmail' ) . '</a>';
+    $settings_link = '<a href="' . esc_url( admin_url( 'admin.php?page=gnn-smtpmail-custom' ) ) . '">' . esc_html__( 'Settings', 'gnn-smtpmail' ) . '</a>';
     $update_url = wp_nonce_url( admin_url( 'plugins.php?gnn_smtpmail_check_update=1' ), 'gnn_smtpmail_manual_update' );
     $update_link = '<a href="' . esc_url( $update_url ) . '">' . esc_html__( 'Check Updates', 'gnn-smtpmail' ) . '</a>';
 

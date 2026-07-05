@@ -56,7 +56,7 @@ class GNN_SMTPMail_Admin {
                 'smtp_secure' => isset($_POST['smtp_secure']) && in_array($_POST['smtp_secure'], array('ssl','tls','none'), true) ? sanitize_text_field($_POST['smtp_secure']) : 'tls',
                 'auth'        => isset($_POST['auth']) ? 1 : 0,
                 'username'    => isset($_POST['username']) ? sanitize_text_field( wp_unslash($_POST['username']) ) : '',
-                'password'    => isset($_POST['password']) ? sanitize_text_field( wp_unslash($_POST['password']) ) : '',
+                'password'    => isset($_POST['password']) ? (string) wp_unslash($_POST['password']) : '',
                 'from_email'  => isset($_POST['from_email']) ? sanitize_email( wp_unslash($_POST['from_email']) ) : '',
                 'from_name'   => isset($_POST['from_name']) ? sanitize_text_field( wp_unslash($_POST['from_name']) ) : '',
             );
@@ -213,7 +213,7 @@ class GNN_SMTPMail_Admin {
                     $senders = array();
                     $api_error = '';
                     if ( ! empty( $b['api_key'] ) ) {
-                        $cache_key = 'gnn_smtpmail_brevo_senders_' . md5( $b['api_key'] );
+                        $cache_key = 'gnn_smtpmail_brevo_senders_' . substr( wp_hash( $b['api_key'] ), 0, 16 );
                         $senders = get_transient( $cache_key );
                         if ( false === $senders ) {
                             $response = wp_remote_get( 'https://api.brevo.com/v3/senders', array(

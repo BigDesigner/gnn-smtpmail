@@ -12,4 +12,4 @@ delete_option( $option );
 delete_site_option( $option );
 
 $table = $wpdb->prefix . 'gnn_smtpmail_logs';
-$wpdb->query( "DROP TABLE IF EXISTS $table" );
+$wpdb->query( "DROP TABLE IF EXISTS `" . esc_sql( $table ) . "`" );
