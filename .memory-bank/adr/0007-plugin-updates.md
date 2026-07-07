@@ -15,4 +15,5 @@ Integrate a GitHub Releases API-based updater class that hooks into core WordPre
 - Verifies semver and filters download domains to prevent SSRF or malicious redirects.
 
 ## Evidence
-- Implemented in [updater.php](file:///c:/Users/bigde/Documents/Project/gnn-smtpmail/inc/updater.php).
+- Implemented in [updater.php](file:///c:/Users/bigde/.antigravity/gnn-smtpmail/inc/updater.php).
+

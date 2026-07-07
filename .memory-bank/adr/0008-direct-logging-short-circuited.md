@@ -15,4 +15,5 @@ Log the delivery result directly inside `pre_wp_mail_handler` for Brevo API, and
 - Avoids duplicated log rows.
 
 ## Evidence
-- Implemented in [class-gnn-smtpmail.php](file:///c:/Users/bigde/Documents/Project/gnn-smtpmail/includes/class-gnn-smtpmail.php#L338).
+- Implemented in [class-gnn-smtpmail.php](file:///c:/Users/bigde/.antigravity/gnn-smtpmail/includes/class-gnn-smtpmail.php#L338).
+

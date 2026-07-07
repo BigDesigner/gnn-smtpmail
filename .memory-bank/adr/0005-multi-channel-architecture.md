@@ -15,4 +15,5 @@ Design a dynamic multi-channel architecture supporting both Custom SMTP (via nat
 - Delivers transactional email faster and with higher deliverability.
 
 ## Evidence
-- Implemented in [class-gnn-smtpmail.php](file:///c:/Users/bigde/Documents/Project/gnn-smtpmail/includes/class-gnn-smtpmail.php#L164-L172).
+- Implemented in [class-gnn-smtpmail.php](file:///c:/Users/bigde/.antigravity/gnn-smtpmail/includes/class-gnn-smtpmail.php#L164-L172).
+

@@ -15,4 +15,5 @@ Hook into the native WordPress `phpmailer_init` action.
 - Follows native WordPress pathways without overriding core mail processes.
 
 ## Evidence
-- Configured in [class-gnn-smtpmail.php](file:///c:/Users/bigde/Documents/Project/gnn-smtpmail/includes/class-gnn-smtpmail.php#L74).
+- Configured in [class-gnn-smtpmail.php](file:///c:/Users/bigde/.antigravity/gnn-smtpmail/includes/class-gnn-smtpmail.php#L74).
+

@@ -16,4 +16,5 @@ Create a custom SQL table (`wp_gnn_smtpmail_logs`) instead of relying on default
 - Simplifies truncation and cleanup without interfering with posts.
 
 ## Evidence
-- Checked in [class-gnn-smtpmail-logger.php](file:///c:/Users/bigde/Documents/Project/gnn-smtpmail/includes/class-gnn-smtpmail-logger.php).
+- Checked in [class-gnn-smtpmail-logger.php](file:///c:/Users/bigde/.antigravity/gnn-smtpmail/includes/class-gnn-smtpmail-logger.php).
+

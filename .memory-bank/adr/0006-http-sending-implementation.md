@@ -16,4 +16,5 @@ Hook into the `pre_wp_mail` filter to intercept outbound mail calls.
 - Returns a boolean result to short-circuit the default mail dispatcher.
 
 ## Evidence
-- Configured in [class-gnn-smtpmail.php](file:///c:/Users/bigde/Documents/Project/gnn-smtpmail/includes/class-gnn-smtpmail.php#L77).
+- Configured in [class-gnn-smtpmail.php](file:///c:/Users/bigde/.antigravity/gnn-smtpmail/includes/class-gnn-smtpmail.php#L77).
+

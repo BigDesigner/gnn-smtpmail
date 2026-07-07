@@ -15,4 +15,5 @@ Use PHP's `ReflectionFunction` API to fetch the absolute filename where `wp_mail
 - Prevents silent failures of GNN SMTPMail.
 
 ## Evidence
-- Implemented in [class-gnn-smtpmail-admin.php](file:///c:/Users/bigde/Documents/Project/gnn-smtpmail/includes/class-gnn-smtpmail-admin.php#L502-L510).
+- Implemented in [class-gnn-smtpmail-admin.php](file:///c:/Users/bigde/.antigravity/gnn-smtpmail/includes/class-gnn-smtpmail-admin.php#L502-L510).
+

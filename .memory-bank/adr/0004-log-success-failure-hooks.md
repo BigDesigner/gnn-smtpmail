@@ -15,4 +15,5 @@ Use `wp_mail_succeeded` and `wp_mail_failed` action hooks.
 - Automatically handles PHP exception capture propagated by PHPMailer.
 
 ## Evidence
-- Configured in [class-gnn-smtpmail.php](file:///c:/Users/bigde/Documents/Project/gnn-smtpmail/includes/class-gnn-smtpmail.php#L84-L85).
+- Configured in [class-gnn-smtpmail.php](file:///c:/Users/bigde/.antigravity/gnn-smtpmail/includes/class-gnn-smtpmail.php#L84-L85).
+
