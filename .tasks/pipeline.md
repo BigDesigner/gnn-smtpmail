@@ -9,6 +9,7 @@ This document manages active milestones, releases, and upcoming backlog items.
 - [x] **MB-002:** Set up GitHub Actions for automated `.zip` releases.
 - [x] **MB-003:** Create specialized Memory Bank for AI context persistence.
 - [x] **MB-004:** Implement GitHub Updater for automatic core updates.
+- [x] **MB-005:** Add automatic and manual GitHub Actions cache cleanup workflow.
 
 ### SEC — Security & Hardening
 - [x] **SEC-001:** Implement Nonce verification for form actions (settings saving, test sending, clearing logs).
