@@ -22,6 +22,7 @@ This document manages active milestones, releases, and upcoming backlog items.
 - [x] **UI-001:** Refine admin pages with unified grid layout and badges.
 - [x] **UI-002:** Add custom plugin action links (Donate, Settings, Check Updates) to the plugins table.
 - [x] **UI-003:** Implement dynamic JS settings section toggle for mailer types.
+- [x] **UI-004:** Assign GNN Admin Menu Position Registry slot ('79.101').
 
 ### FEAT — Multi-Channel Email Sending
 - [x] **FEAT-001:** Custom SMTP sending via PHPMailer init.

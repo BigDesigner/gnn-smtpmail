@@ -24,7 +24,7 @@ class GNN_SMTPMail_Admin {
             'gnn-smtpmail',
             array( $this, 'page_welcome' ),
             'dashicons-email-alt2',
-            81
+            '79.101'
         );
 
         add_submenu_page( 'gnn-smtpmail', __( 'Ayarlar', 'gnn-smtpmail' ), __( 'Ayarlar', 'gnn-smtpmail' ), 'manage_options', 'gnn-smtpmail-custom', array( $this, 'page_custom' ) );

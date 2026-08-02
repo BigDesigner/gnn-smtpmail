@@ -14,9 +14,15 @@ To avoid namespace pollution and conflicts with other WordPress themes or plugin
 - **CSS:** Zero-conflict vanilla CSS with custom properties (CSS variables). Use semi-transparent layers and relative dimensions for compatibility with dark/light themes.
 - **Translation / i18n:** All user-facing strings must use standard WordPress translation functions (`__()`, `_e()`, `esc_html__()`, etc.) with text domain `gnn-smtpmail`.
 
+## 4. Admin Menu Position Registry (CRITICAL)
+- All GNN product family items must register their top-level menu position using a quoted 3-digit decimal string literal (e.g., `'79.101'`).
+- Themes use `'58.xyz'`–`'59.xyz'` (next to Appearance). Plugins use `'78.xyz'`–`'79.xyz'` (next to Settings).
+- GNN SMTPMail is assigned position slot `'79.101'`.
+- Refer to `.memory-bank/adr/0010-gnn-admin-menu-position-registry.md` for the complete slot registry.
+
 ---
 
-## 3. Pre-Commit Auditing Checklist
+## 5. Pre-Commit Auditing Checklist
 AI agents MUST verify the following before proposing commits:
 1. **ABSPATH check:** verify the file header guard is present.
 2. **Prefix check:** all functions, variables, CSS hooks are correctly prefixed.
@@ -24,3 +30,4 @@ AI agents MUST verify the following before proposing commits:
 4. **Sanitization check:** all input variables are sanitized (`sanitize_text_field`, `sanitize_email`).
 5. **Nonce / Capability checks:** verify permissions and CSRF safety.
 6. **Comments preservation:** verify no historical code comments were altered or deleted.
+7. **Admin menu position check:** verify `add_menu_page()` uses the assigned quoted string slot (e.g., `'79.101'`).
