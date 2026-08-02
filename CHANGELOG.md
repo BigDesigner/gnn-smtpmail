@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.3] - 2026-08-02
+
+### Added
+- Registered GNN Product Family admin menu position slot `'79.101'` in `add_menu_page()`.
+- Created `.memory-bank/adr/0010-gnn-admin-menu-position-registry.md` and updated engineering constitution specifications.
+
 ## [1.5.2] - 2026-07-06
 
 ### Fixed

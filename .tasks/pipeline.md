@@ -32,6 +32,10 @@ This document manages active milestones, releases, and upcoming backlog items.
 
 ## 🚀 Recent Releases
 
+### v1.5.3 — GNN Admin Menu Registry Slot ('79.101') (2026-08-02)
+- Assigned GNN Product Family admin menu position slot `'79.101'`.
+- Added ADR 0010 and updated engineering constitution specs.
+
 ### v1.5.2 — Full Security Audit Hardening (2026-07-06)
 - Escaped logger queries table names with `esc_sql()` and backticks (YÜK-01, YÜK-02, ORT-01).
 - Path traversal verification for email attachments (ORT-04).
