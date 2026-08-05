@@ -18,13 +18,13 @@
         ".memory-bank/audits/",
         ".memory-bank/bugs/",
         ".archive/docs-migration/",
-        "includes/",
-        "inc/",
-        "assets/",
-        "languages/",
-        "gnn-smtpmail.php",
-        "readme.txt",
-        "uninstall.php"
+        "gnn-smtpmail/includes/",
+        "gnn-smtpmail/inc/",
+        "gnn-smtpmail/assets/",
+        "gnn-smtpmail/languages/",
+        "gnn-smtpmail/gnn-smtpmail.php",
+        "gnn-smtpmail/readme.txt",
+        "gnn-smtpmail/uninstall.php"
       ]
     },
     "automation": {

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.4] - 2026-08-05
+
+### Changed
+- Repository restructured: plugin files moved from the repo root into a `gnn-smtpmail/` subdirectory so the repo mirrors the shipped plugin layout.
+- Simplified `release.yml` to zip the `gnn-smtpmail/` directory directly instead of rsyncing excluded paths into a temporary build folder.
+
 ## [1.5.3] - 2026-08-02
 
 ### Added

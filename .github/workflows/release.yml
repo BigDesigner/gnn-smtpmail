@@ -19,48 +19,24 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v7
 
-      - name: Extract Version from gnn-smtpmail.php
+      - name: Extract Version from gnn-smtpmail/gnn-smtpmail.php
         id: get_version
         run: |
           VERSION_INPUT="${{ github.event.inputs.version_override }}"
           if [ -n "$VERSION_INPUT" ]; then
             VERSION="$VERSION_INPUT"
           else
-            VERSION=$(grep -m 1 "Version:" gnn-smtpmail.php | awk '{print $NF}')
+            VERSION=$(grep -m 1 "Version:" gnn-smtpmail/gnn-smtpmail.php | awk '{print $NF}')
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Create Build Directory and Zip
+      - name: Zip Plugin Directory
         run: |
-          # Define zip name
+          # The repository now stores the plugin exactly as it should ship,
+          # under the gnn-smtpmail/ folder, so we just zip it directly.
           ZIP_NAME="gnn-smtpmail-${{ env.VERSION }}.zip"
-          
-          # Create a temporary directory for clean build and a subfolder for the plugin
-          mkdir -p build/gnn-smtpmail
-          
-          # Use rsync to copy files, excluding the build directory itself and other dev files
-          # This is more robust than 'cp' for recursive situations
-          rsync -av --exclude='build' \
-                    --exclude='.git' \
-                    --exclude='.github' \
-                    --exclude='.vscode' \
-                    --exclude='memory-bank' \
-                    --exclude='specs' \
-                    --exclude='agents' \
-                    --exclude='tasks' \
-                    --exclude='docs' \
-                    --exclude='archive' \
-                    --exclude='.gitignore' \
-                    --exclude='*.md' \
-                    ./ build/gnn-smtpmail/
-          
-          # Explicitly include only CHANGELOG.md
-          cp CHANGELOG.md build/gnn-smtpmail/
-          
-          # Zip the build directory (this will include the gnn-smtpmail folder)
-          cd build && zip -r "../$ZIP_NAME" gnn-smtpmail && cd ..
-          
+          zip -r "$ZIP_NAME" gnn-smtpmail -x '*.DS_Store'
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
 
       - name: Create GitHub Release
