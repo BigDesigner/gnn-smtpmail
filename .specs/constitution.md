@@ -14,6 +14,11 @@ To avoid namespace pollution and conflicts with other WordPress themes or plugin
 - **CSS:** Zero-conflict vanilla CSS with custom properties (CSS variables). Use semi-transparent layers and relative dimensions for compatibility with dark/light themes.
 - **Translation / i18n:** All user-facing strings must use standard WordPress translation functions (`__()`, `_e()`, `esc_html__()`, etc.) with text domain `gnn-smtpmail`.
 
+## 3. Contribution Workflow
+- Feature branches use `feature/` prefix (e.g., `feature/amazing-feature`).
+- Bug reports should specify reproduction steps, environment details (WP/PHP versions), and relevant logs.
+- All contributions must comply with WPCS and repository security constraints.
+
 ## 4. Admin Menu Position Registry (CRITICAL)
 - All GNN product family items must register their top-level menu position using a quoted 3-digit decimal string literal (e.g., `'79.101'`).
 - Themes use `'58.xyz'`–`'59.xyz'` (next to Appearance). Plugins use `'78.xyz'`–`'79.xyz'` (next to Settings).
