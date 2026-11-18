@@ -13,7 +13,7 @@ class GNN_SMTPMail_Admin {
     public function assets( $hook ) {
         if ( strpos( $hook, 'gnn-smtpmail' ) === false ) return;
         wp_enqueue_style( 'gnn-smtpmail-admin', GNN_SMTPMAIL_URL . 'assets/admin.css', array(), GNN_SMTPMAIL_VERSION );
-        wp_enqueue_script( 'gnn-smtpmail-admin', GNN_SMTPMAIL_URL . 'assets/admin.js', array('jquery'), GNN_SMTPMAIL_VERSION, true );
+        wp_enqueue_script( 'gnn-smtpmail-admin', GNN_SMTPMAIL_URL . 'assets/admin.js', array(), GNN_SMTPMAIL_VERSION, true );
     }
 
     public function admin_menu() {
@@ -49,19 +49,23 @@ class GNN_SMTPMail_Admin {
 
             $mailer_type = isset($_POST['mailer_type']) && in_array($_POST['mailer_type'], array('custom', 'brevo'), true) ? sanitize_text_field($_POST['mailer_type']) : 'custom';
 
+            $existing_settings = $this->settings();
+            $smtp_pass_const   = defined( 'GNN_SMTPMAIL_SMTP_PASS' ) && is_string( GNN_SMTPMAIL_SMTP_PASS );
+            $brevo_key_const   = defined( 'GNN_SMTPMAIL_BREVO_KEY' ) && is_string( GNN_SMTPMAIL_BREVO_KEY );
+
             $custom = array(
                 'enabled'     => isset($_POST['enabled']) ? 1 : 0,
                 'host'        => isset($_POST['host']) ? sanitize_text_field( wp_unslash($_POST['host']) ) : '',
                 'port'        => isset($_POST['port']) ? intval($_POST['port']) : 587,
-                'smtp_secure' => isset($_POST['smtp_secure']) && in_array($_POST['smtp_secure'], array('ssl','tls','none'), true) ? sanitize_text_field($_POST['smtp_secure']) : 'tls',
+                'smtp_secure' => isset($_POST['smtp_secure']) && in_array($_POST['smtp_secure'], array('ssl','tls','none'), true) ? sanitize_text_field( wp_unslash($_POST['smtp_secure']) ) : 'tls',
                 'auth'        => isset($_POST['auth']) ? 1 : 0,
                 'username'    => isset($_POST['username']) ? sanitize_text_field( wp_unslash($_POST['username']) ) : '',
-                'password'    => isset($_POST['password']) ? (string) wp_unslash($_POST['password']) : '',
+                'password'    => $smtp_pass_const ? (string) ( $existing_settings['custom']['password'] ?? '' ) : ( isset($_POST['password']) ? (string) wp_unslash($_POST['password']) : '' ),
                 'from_email'  => isset($_POST['from_email']) ? sanitize_email( wp_unslash($_POST['from_email']) ) : '',
                 'from_name'   => isset($_POST['from_name']) ? sanitize_text_field( wp_unslash($_POST['from_name']) ) : '',
             );
 
-            $brevo_api_key = isset($_POST['brevo_api_key']) ? sanitize_text_field( wp_unslash($_POST['brevo_api_key']) ) : '';
+            $brevo_api_key = $brevo_key_const ? (string) ( $existing_settings['brevo']['api_key'] ?? '' ) : ( isset($_POST['brevo_api_key']) ? sanitize_text_field( wp_unslash($_POST['brevo_api_key']) ) : '' );
             $brevo_sender_select = isset($_POST['brevo_sender_select']) ? sanitize_text_field( wp_unslash($_POST['brevo_sender_select']) ) : '';
             $brevo_from_name = '';
             $brevo_from_email = '';
@@ -121,6 +125,9 @@ class GNN_SMTPMail_Admin {
     }
 
     public function page_welcome() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'Bu sayfaya erişim yetkiniz yok.', 'gnn-smtpmail' ) );
+        }
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('GNN SMTPMail (Custom SMTP & Brevo API)', 'gnn-smtpmail'); ?></h1>
@@ -136,10 +143,16 @@ class GNN_SMTPMail_Admin {
     }
 
     public function page_custom() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'Bu sayfaya erişim yetkiniz yok.', 'gnn-smtpmail' ) );
+        }
         $s = $this->settings();
         $mailer_type = isset($s['mailer_type']) ? $s['mailer_type'] : 'custom';
         $c = isset($s['custom']) ? $s['custom'] : array();
         $b = isset($s['brevo']) ? $s['brevo'] : array();
+        $smtp_pass_const = defined( 'GNN_SMTPMAIL_SMTP_PASS' ) && is_string( GNN_SMTPMAIL_SMTP_PASS );
+        $brevo_key_const = defined( 'GNN_SMTPMAIL_BREVO_KEY' ) && is_string( GNN_SMTPMAIL_BREVO_KEY );
+        $active_brevo_key = $brevo_key_const ? GNN_SMTPMAIL_BREVO_KEY : ( $b['api_key'] ?? '' );
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('E-posta Gönderim Ayarları', 'gnn-smtpmail'); ?></h1>
@@ -148,7 +161,7 @@ class GNN_SMTPMail_Admin {
                 <?php wp_nonce_field( 'gnn_custom_save_action', 'gnn_custom_nonce' ); ?>
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th><?php esc_html_e('Gönderim Yöntemi', 'gnn-smtpmail'); ?></th>
+                        <th scope="row"><label for="gnn_mailer_type"><?php esc_html_e('Gönderim Yöntemi', 'gnn-smtpmail'); ?></label></th>
                         <td>
                             <select name="mailer_type" id="gnn_mailer_type">
                                 <option value="custom" <?php selected($mailer_type, 'custom'); ?>><?php esc_html_e('Custom SMTP', 'gnn-smtpmail'); ?></option>
@@ -158,25 +171,25 @@ class GNN_SMTPMail_Admin {
                     </tr>
                 </table>
 
-                <div id="gnn_section_custom" class="gnn-settings-section" style="<?php echo $mailer_type === 'custom' ? '' : 'display:none;'; ?>">
+                <div id="gnn_section_custom" class="gnn-settings-section"<?php echo $mailer_type === 'custom' ? '' : ' hidden'; ?>>
                     <h3><?php esc_html_e('Custom SMTP Ayarları', 'gnn-smtpmail'); ?></h3>
                     <table class="form-table" role="presentation">
                         <tr>
-                            <th><?php esc_html_e('Custom SMTP\'yi Etkinleştir', 'gnn-smtpmail'); ?></th>
-                            <td><label><input type="checkbox" name="enabled" value="1" <?php checked( !empty($c['enabled']) ); ?> /> <?php esc_html_e('Etkin', 'gnn-smtpmail'); ?></label></td>
+                            <th scope="row"><label for="gnn_smtp_enabled"><?php esc_html_e('Custom SMTP\'yi Etkinleştir', 'gnn-smtpmail'); ?></label></th>
+                            <td><label><input type="checkbox" id="gnn_smtp_enabled" name="enabled" value="1" <?php checked( !empty($c['enabled']) ); ?> /> <?php esc_html_e('Etkin', 'gnn-smtpmail'); ?></label></td>
                         </tr>
                         <tr>
-                            <th><?php esc_html_e('Sunucu', 'gnn-smtpmail'); ?></th>
-                            <td><input type="text" name="host" value="<?php echo esc_attr( $c['host'] ?? '' ); ?>" class="regular-text" /></td>
+                            <th scope="row"><label for="gnn_smtp_host"><?php esc_html_e('Sunucu', 'gnn-smtpmail'); ?></label></th>
+                            <td><input type="text" id="gnn_smtp_host" name="host" value="<?php echo esc_attr( $c['host'] ?? '' ); ?>" class="regular-text" /></td>
                         </tr>
                         <tr>
-                            <th><?php esc_html_e('Port', 'gnn-smtpmail'); ?></th>
-                            <td><input type="number" name="port" value="<?php echo esc_attr( $c['port'] ?? 587 ); ?>" /></td>
+                            <th scope="row"><label for="gnn_smtp_port"><?php esc_html_e('Port', 'gnn-smtpmail'); ?></label></th>
+                            <td><input type="number" id="gnn_smtp_port" name="port" value="<?php echo esc_attr( $c['port'] ?? 587 ); ?>" /></td>
                         </tr>
                         <tr>
-                            <th><?php esc_html_e('Şifreleme', 'gnn-smtpmail'); ?></th>
+                            <th scope="row"><label for="gnn_smtp_secure"><?php esc_html_e('Şifreleme', 'gnn-smtpmail'); ?></label></th>
                             <td>
-                                <select name="smtp_secure">
+                                <select id="gnn_smtp_secure" name="smtp_secure">
                                     <?php $sel = $c['smtp_secure'] ?? 'tls'; ?>
                                     <option value="none" <?php selected($sel,'none'); ?>><?php esc_html_e('Yok', 'gnn-smtpmail'); ?></option>
                                     <option value="tls" <?php selected($sel,'tls'); ?>>TLS</option>
@@ -185,40 +198,47 @@ class GNN_SMTPMail_Admin {
                             </td>
                         </tr>
                         <tr>
-                            <th><?php esc_html_e('SMTP Kimlik Doğrulama', 'gnn-smtpmail'); ?></th>
-                            <td><label><input type="checkbox" name="auth" value="1" <?php checked( !empty($c['auth']) ); ?> /> <?php esc_html_e('Açık', 'gnn-smtpmail'); ?></label></td>
+                            <th scope="row"><label for="gnn_smtp_auth"><?php esc_html_e('SMTP Kimlik Doğrulama', 'gnn-smtpmail'); ?></label></th>
+                            <td><label><input type="checkbox" id="gnn_smtp_auth" name="auth" value="1" <?php checked( !empty($c['auth']) ); ?> /> <?php esc_html_e('Açık', 'gnn-smtpmail'); ?></label></td>
                         </tr>
                         <tr>
-                            <th><?php esc_html_e('Kullanıcı Adı', 'gnn-smtpmail'); ?></th>
-                            <td><input type="text" name="username" value="<?php echo esc_attr( $c['username'] ?? '' ); ?>" class="regular-text" autocomplete="off" /></td>
+                            <th scope="row"><label for="gnn_smtp_username"><?php esc_html_e('Kullanıcı Adı', 'gnn-smtpmail'); ?></label></th>
+                            <td><input type="text" id="gnn_smtp_username" name="username" value="<?php echo esc_attr( $c['username'] ?? '' ); ?>" class="regular-text" autocomplete="off" /></td>
                         </tr>
                         <tr>
-                            <th><?php esc_html_e('Şifre', 'gnn-smtpmail'); ?></th>
-                            <td><input type="password" name="password" value="<?php echo esc_attr( $c['password'] ?? '' ); ?>" class="regular-text" autocomplete="new-password" /></td>
+                            <th scope="row"><label for="gnn_smtp_password"><?php esc_html_e('Şifre', 'gnn-smtpmail'); ?></label></th>
+                            <td>
+                                <?php if ( $smtp_pass_const ) : ?>
+                                    <input type="password" id="gnn_smtp_password" value="********" class="regular-text" disabled />
+                                    <p class="description"><?php esc_html_e('wp-config.php içerisinde GNN_SMTPMAIL_SMTP_PASS sabiti ile tanımlandı.', 'gnn-smtpmail'); ?></p>
+                                <?php else : ?>
+                                    <input type="password" id="gnn_smtp_password" name="password" value="<?php echo esc_attr( $c['password'] ?? '' ); ?>" class="regular-text" autocomplete="new-password" />
+                                <?php endif; ?>
+                            </td>
                         </tr>
                         <tr>
-                            <th><?php esc_html_e('Gönderen E-posta', 'gnn-smtpmail'); ?></th>
-                            <td><input type="email" name="from_email" value="<?php echo esc_attr( $c['from_email'] ?? '' ); ?>" class="regular-text" /></td>
+                            <th scope="row"><label for="gnn_smtp_from_email"><?php esc_html_e('Gönderen E-posta', 'gnn-smtpmail'); ?></label></th>
+                            <td><input type="email" id="gnn_smtp_from_email" name="from_email" value="<?php echo esc_attr( $c['from_email'] ?? '' ); ?>" class="regular-text" /></td>
                         </tr>
                         <tr>
-                            <th><?php esc_html_e('Gönderen Adı', 'gnn-smtpmail'); ?></th>
-                            <td><input type="text" name="from_name" value="<?php echo esc_attr( $c['from_name'] ?? '' ); ?>" class="regular-text" /></td>
+                            <th scope="row"><label for="gnn_smtp_from_name"><?php esc_html_e('Gönderen Adı', 'gnn-smtpmail'); ?></label></th>
+                            <td><input type="text" id="gnn_smtp_from_name" name="from_name" value="<?php echo esc_attr( $c['from_name'] ?? '' ); ?>" class="regular-text" /></td>
                         </tr>
                     </table>
                 </div>
 
-                <div id="gnn_section_brevo" class="gnn-settings-section" style="<?php echo $mailer_type === 'brevo' ? '' : 'display:none;'; ?>">
+                <div id="gnn_section_brevo" class="gnn-settings-section"<?php echo $mailer_type === 'brevo' ? '' : ' hidden'; ?>>
                     <h3><?php esc_html_e('Brevo API Ayarları', 'gnn-smtpmail'); ?></h3>
                     <?php
                     $senders = array();
                     $api_error = '';
-                    if ( ! empty( $b['api_key'] ) ) {
-                        $cache_key = 'gnn_smtpmail_brevo_senders_' . substr( wp_hash( $b['api_key'] ), 0, 16 );
+                    if ( ! empty( $active_brevo_key ) ) {
+                        $cache_key = 'gnn_smtpmail_brevo_senders_' . substr( wp_hash( $active_brevo_key ), 0, 16 );
                         $senders = get_transient( $cache_key );
                         if ( false === $senders ) {
                             $response = wp_remote_get( 'https://api.brevo.com/v3/senders', array(
                                 'headers' => array(
-                                    'api-key' => $b['api_key'],
+                                    'api-key' => $active_brevo_key,
                                     'Accept'  => 'application/json',
                                 ),
                                 'timeout' => 10,
@@ -249,31 +269,36 @@ class GNN_SMTPMail_Admin {
                     ?>
                     <table class="form-table" role="presentation">
                         <tr>
-                            <th><?php esc_html_e('Brevo API Key', 'gnn-smtpmail'); ?></th>
+                            <th scope="row"><label for="gnn_brevo_api_key"><?php esc_html_e('Brevo API Key', 'gnn-smtpmail'); ?></label></th>
                             <td>
-                                <input type="password" name="brevo_api_key" value="<?php echo esc_attr( $b['api_key'] ?? '' ); ?>" class="regular-text" autocomplete="new-password" />
-                                <p class="description"><?php esc_html_e('Brevo hesabınızdaki API Key değerini buraya girin ve kaydedin.', 'gnn-smtpmail'); ?></p>
+                                <?php if ( $brevo_key_const ) : ?>
+                                    <input type="password" id="gnn_brevo_api_key" value="********" class="regular-text" disabled />
+                                    <p class="description"><?php esc_html_e('wp-config.php içerisinde GNN_SMTPMAIL_BREVO_KEY sabiti ile tanımlandı.', 'gnn-smtpmail'); ?></p>
+                                <?php else : ?>
+                                    <input type="password" id="gnn_brevo_api_key" name="brevo_api_key" value="<?php echo esc_attr( $b['api_key'] ?? '' ); ?>" class="regular-text" autocomplete="new-password" />
+                                    <p class="description"><?php esc_html_e('Brevo hesabınızdaki API Key değerini buraya girin ve kaydedin.', 'gnn-smtpmail'); ?></p>
+                                <?php endif; ?>
                             </td>
                         </tr>
-                        <?php if ( empty( $b['api_key'] ) ) : ?>
+                        <?php if ( empty( $active_brevo_key ) ) : ?>
                             <tr>
-                                <th><?php esc_html_e('Gönderici Seçin', 'gnn-smtpmail'); ?></th>
+                                <th scope="row"><?php esc_html_e('Gönderici Seçin', 'gnn-smtpmail'); ?></th>
                                 <td>
                                     <span class="description" style="color: #d63638;"><?php esc_html_e('Gönderici seçmek için önce API anahtarınızı girip kaydedin.', 'gnn-smtpmail'); ?></span>
                                 </td>
                             </tr>
                         <?php elseif ( ! empty( $api_error ) ) : ?>
                             <tr>
-                                <th><?php esc_html_e('Gönderici Seçin', 'gnn-smtpmail'); ?></th>
+                                <th scope="row"><?php esc_html_e('Gönderici Seçin', 'gnn-smtpmail'); ?></th>
                                 <td>
                                     <span class="description" style="color: #d63638;"><?php echo esc_html( $api_error ); ?></span>
                                 </td>
                             </tr>
                         <?php else : ?>
                             <tr>
-                                <th><?php esc_html_e('Gönderici Seçin', 'gnn-smtpmail'); ?></th>
+                                <th scope="row"><label for="gnn_brevo_sender_select"><?php esc_html_e('Gönderici Seçin', 'gnn-smtpmail'); ?></label></th>
                                 <td>
-                                    <select name="brevo_sender_select">
+                                    <select id="gnn_brevo_sender_select" name="brevo_sender_select">
                                         <option value=""><?php esc_html_e('-- Seçin --', 'gnn-smtpmail'); ?></option>
                                         <?php
                                         $current_sender = ($b['from_name'] ?? '') . '|' . ($b['from_email'] ?? '');
@@ -305,12 +330,16 @@ class GNN_SMTPMail_Admin {
     }
 
     public function page_test() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'Bu sayfaya erişim yetkiniz yok.', 'gnn-smtpmail' ) );
+        }
         $s = $this->settings();
         $mailer_type = isset($s['mailer_type']) ? $s['mailer_type'] : 'custom';
         $active = false;
         
         if ( $mailer_type === 'brevo' ) {
-            $active = ! empty( $s['brevo']['api_key'] );
+            $brevo_key = ( defined( 'GNN_SMTPMAIL_BREVO_KEY' ) && is_string( GNN_SMTPMAIL_BREVO_KEY ) ) ? GNN_SMTPMAIL_BREVO_KEY : ( $s['brevo']['api_key'] ?? '' );
+            $active = ! empty( $brevo_key );
             $channel_name = 'BREVO API';
         } else {
             $active = ! empty( $s['custom']['enabled'] );
@@ -322,25 +351,25 @@ class GNN_SMTPMail_Admin {
             <?php settings_errors( 'gnn-smtpmail' ); ?>
             <p>
             <?php if ( ! $active ) : ?>
-                <span class="notice notice-warning inline"><p><?php echo sprintf( esc_html__('%s şu an devre dışı veya yapılandırılmamış.', 'gnn-smtpmail'), $channel_name ); ?></p></span>
+                <span class="notice notice-warning inline"><p><?php echo sprintf( esc_html__('%s şu an devre dışı veya yapılandırılmamış.', 'gnn-smtpmail'), esc_html( $channel_name ) ); ?></p></span>
             <?php else : ?>
-                <strong><?php echo sprintf( esc_html__('Aktif kanal: %s', 'gnn-smtpmail'), $channel_name ); ?></strong>
+                <strong><?php echo sprintf( esc_html__('Aktif kanal: %s', 'gnn-smtpmail'), esc_html( $channel_name ) ); ?></strong>
             <?php endif; ?>
             </p>
             <form method="post">
                 <?php wp_nonce_field( 'gnn_test_send_action', 'gnn_test_nonce' ); ?>
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th><?php esc_html_e('Alıcı (To)', 'gnn-smtpmail'); ?></th>
-                        <td><input type="email" name="to" required class="regular-text" /></td>
+                        <th scope="row"><label for="gnn_test_to"><?php esc_html_e('Alıcı (To)', 'gnn-smtpmail'); ?></label></th>
+                        <td><input type="email" id="gnn_test_to" name="to" required class="regular-text" /></td>
                     </tr>
                     <tr>
-                        <th><?php esc_html_e('Konu', 'gnn-smtpmail'); ?></th>
-                        <td><input type="text" name="subject" class="regular-text" value="<?php esc_attr_e('GNN SMTPMail Test', 'gnn-smtpmail'); ?>" /></td>
+                        <th scope="row"><label for="gnn_test_subject"><?php esc_html_e('Konu', 'gnn-smtpmail'); ?></label></th>
+                        <td><input type="text" id="gnn_test_subject" name="subject" class="regular-text" value="<?php esc_attr_e('GNN SMTPMail Test', 'gnn-smtpmail'); ?>" /></td>
                     </tr>
                     <tr>
-                        <th><?php esc_html_e('Mesaj', 'gnn-smtpmail'); ?></th>
-                        <td><textarea name="message" rows="6" class="large-text"><?php esc_html_e('Bu bir test e-postasıdır. GNN SMTPMail üzerinden gönderilmiştir.', 'gnn-smtpmail'); ?></textarea></td>
+                        <th scope="row"><label for="gnn_test_message"><?php esc_html_e('Mesaj', 'gnn-smtpmail'); ?></label></th>
+                        <td><textarea id="gnn_test_message" name="message" rows="6" class="large-text"><?php esc_html_e('Bu bir test e-postasıdır. GNN SMTPMail üzerinden gönderilmiştir.', 'gnn-smtpmail'); ?></textarea></td>
                     </tr>
                 </table>
                 <p><button type="submit" name="gnn_test_send" class="button button-primary"><?php esc_html_e('Gönder', 'gnn-smtpmail'); ?></button></p>
@@ -352,8 +381,12 @@ class GNN_SMTPMail_Admin {
     }
 
     public function page_logs() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'Bu sayfaya erişim yetkiniz yok.', 'gnn-smtpmail' ) );
+        }
         $paged = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
-        $status = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
+        $raw_status = isset($_GET['status']) ? sanitize_text_field( wp_unslash($_GET['status']) ) : '';
+        $status = in_array( $raw_status, array( 'success', 'error' ), true ) ? $raw_status : '';
         $per_page = 20;
         $data = GNN_SMTPMail_Logger::get_logs( $paged, $per_page, $status );
         $rows = $data['rows'];
@@ -425,15 +458,16 @@ class GNN_SMTPMail_Admin {
                 <button type="submit" name="gnn_clear_logs" class="button"><?php esc_html_e('Tüm Logları Temizle', 'gnn-smtpmail'); ?></button>
             </form>
 
+            <div class="gnn-table-responsive">
             <table class="widefat striped" style="margin-top:15px;">
                 <thead>
                 <tr>
-                    <th><?php esc_html_e('Tarih', 'gnn-smtpmail'); ?></th>
-                    <th><?php esc_html_e('Kanal', 'gnn-smtpmail'); ?></th>
-                    <th><?php esc_html_e('Alıcı', 'gnn-smtpmail'); ?></th>
-                    <th><?php esc_html_e('Konu', 'gnn-smtpmail'); ?></th>
-                    <th><?php esc_html_e('Durum', 'gnn-smtpmail'); ?></th>
-                    <th><?php esc_html_e('Mesaj', 'gnn-smtpmail'); ?></th>
+                    <th scope="col"><?php esc_html_e('Tarih', 'gnn-smtpmail'); ?></th>
+                    <th scope="col"><?php esc_html_e('Kanal', 'gnn-smtpmail'); ?></th>
+                    <th scope="col"><?php esc_html_e('Alıcı', 'gnn-smtpmail'); ?></th>
+                    <th scope="col"><?php esc_html_e('Konu', 'gnn-smtpmail'); ?></th>
+                    <th scope="col"><?php esc_html_e('Durum', 'gnn-smtpmail'); ?></th>
+                    <th scope="col"><?php esc_html_e('Mesaj', 'gnn-smtpmail'); ?></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -451,6 +485,7 @@ class GNN_SMTPMail_Admin {
                 <?php endif; ?>
                 </tbody>
             </table>
+            </div>
 
             <?php if ( $total_pages > 1 ) : ?>
                 <div class="tablenav">

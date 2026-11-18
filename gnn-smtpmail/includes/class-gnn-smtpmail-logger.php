@@ -78,7 +78,7 @@ class GNN_SMTPMail_Logger {
 
     public static function get_logs( $paged = 1, $per_page = 20, $status = '' ) {
         global $wpdb;
-        $table = self::table_name();
+        $table = esc_sql( self::table_name() );
         $offset = max(0, ( $paged - 1 ) * $per_page );
 
         $where = '1=1';
@@ -98,6 +98,25 @@ class GNN_SMTPMail_Logger {
         $query = "SELECT * FROM `{$table}` WHERE {$where} ORDER BY id DESC LIMIT %d OFFSET %d";
         $rows = $wpdb->get_results( $wpdb->prepare( $query, $params2 ) );
         return array( 'rows' => $rows, 'total' => intval($total) );
+    }
+
+    /**
+     * Prune log entries older than the configured retention period.
+     */
+    public static function prune_old_logs() {
+        global $wpdb;
+        $table = self::table_name();
+        $days = absint( apply_filters( 'gnn_smtpmail_log_retention_days', 30 ) );
+        if ( $days < 1 ) {
+            return;
+        }
+        $cutoff = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
+        $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM `" . esc_sql( $table ) . "` WHERE logged_at < %s",
+                $cutoff
+            )
+        );
     }
 
     public static function drop_table() {

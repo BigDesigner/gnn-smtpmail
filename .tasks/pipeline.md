@@ -32,6 +32,13 @@ This document manages active milestones, releases, and upcoming backlog items.
 
 ## 🚀 Recent Releases
 
+### v1.6.0 — Bulletproof Hardening & WP 7.1.4 Compatibility (2026-11-18)
+- Eliminated per-request `SHOW TABLES` query and global `upgrade.php` loading.
+- Added Brevo API v3 `Cc:` and `Bcc:` header parsing and multi-root attachment path validation.
+- Added automated daily WP-Cron log pruning (`gnn_smtpmail_daily_cleanup`) and `wp-config.php` constant overrides.
+- Fixed GitHub Updater error transient caching, HTTPS/CDN validation, `$overwrite` flag, and WP 6.7+ `init` textdomain loading.
+- Removed jQuery dependency (Vanilla JS), added WCAG accessibility attributes, and updated `cleanup-cache.yml` to `actions/github-script@v9`.
+
 ### v1.5.3 — GNN Admin Menu Registry Slot ('79.101') (2026-08-02)
 - Assigned GNN Product Family admin menu position slot `'79.101'`.
 - Added ADR 0010 and updated engineering constitution specs.
@@ -52,8 +59,13 @@ This document manages active milestones, releases, and upcoming backlog items.
 
 ---
 
-## 🏃 Active Sprint Tasks (v1.5.2-sentinel)
-- [x] **SENTINEL-MIGRATE:** Migrate documentation and AI rules to Sentinel Agent Memory Bank structure.
+## 🏃 Active Sprint Tasks (v1.6.0-bulletproof)
+- [x] **TASK-BP-01 (Brevo CC/BCC):** Implement RFC & Brevo v3 JSON payload parsing for `Cc:` and `Bcc:` headers in `pre_wp_mail_handler`.
+- [x] **TASK-BP-02 (Resilient Attachments):** Implement multi-root (`ABSPATH`, `WP_CONTENT_DIR`, uploads) path validation with `wp_normalize_path()`.
+- [x] **TASK-BP-03 (Performance / Lazy DB):** Eliminate `SHOW TABLES` on every request, optimize schema check to version change/activation, and remove global `upgrade.php` load.
+- [x] **TASK-BP-04 (Automated Log Rotation):** Implement scheduled WP-Cron daily log pruning for entries older than 30 days.
+- [x] **TASK-BP-05 (wp-config.php Constants):** Implement `GNN_SMTPMAIL_SMTP_PASS` & `GNN_SMTPMAIL_BREVO_KEY` credential overrides with admin UI indicator.
+- [x] **TASK-BP-06 (Multisite & Cleanup):** Ensure uninstall and deactivation cleanly clean up all options and support network installs.
 - [ ] **TEST-UPDATER:** Manually verify that the plugin's Check Updates action works as expected in a WordPress admin context.
 
 ---

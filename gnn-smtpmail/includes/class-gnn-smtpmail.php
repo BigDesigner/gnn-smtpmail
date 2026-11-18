@@ -45,24 +45,28 @@ class GNN_SMTPMail {
             update_option( GNN_SMTPMAIL_OPTION, $migrated );
         }
         GNN_SMTPMail_Logger::create_table();
+        update_option( 'gnn_smtpmail_db_version', GNN_SMTPMAIL_VERSION );
+
+        if ( ! wp_next_scheduled( 'gnn_smtpmail_daily_cleanup' ) ) {
+            wp_schedule_event( time(), 'daily', 'gnn_smtpmail_daily_cleanup' );
+        }
     }
 
     public static function deactivate() {
-        // keep data until uninstall
+        wp_clear_scheduled_hook( 'gnn_smtpmail_daily_cleanup' );
     }
 
     public function __construct() {
-        // Auto-run DB creation if version changed or table is missing (e.g. plugin updated via git/updater)
-        global $wpdb;
-        $table = $wpdb->prefix . GNN_SMTPMAIL_TABLE;
-        $show_table = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) );
-        $table_exists = ! empty( $show_table ) && strcasecmp( $show_table, $table ) === 0;
-
+        // Lazy DB table creation/migration only when plugin version changes
         $db_version = get_option( 'gnn_smtpmail_db_version', '' );
-        if ( ! $table_exists || $db_version !== GNN_SMTPMAIL_VERSION ) {
+        if ( $db_version !== GNN_SMTPMAIL_VERSION ) {
             GNN_SMTPMail_Logger::create_table();
             update_option( 'gnn_smtpmail_db_version', GNN_SMTPMAIL_VERSION );
         }
+
+        // Scheduled log rotation
+        add_action( 'gnn_smtpmail_daily_cleanup', array( 'GNN_SMTPMail_Logger', 'prune_old_logs' ) );
+        add_action( 'init', array( $this, 'ensure_cron_scheduled' ) );
 
         // Admin UI
         if ( is_admin() ) {
@@ -88,6 +92,15 @@ class GNN_SMTPMail {
         add_action( 'admin_init', array( $this, 'admin_hardening_headers' ) );
     }
 
+    /**
+     * Ensure daily log pruning cron is scheduled.
+     */
+    public function ensure_cron_scheduled() {
+        if ( ! wp_next_scheduled( 'gnn_smtpmail_daily_cleanup' ) ) {
+            wp_schedule_event( time(), 'daily', 'gnn_smtpmail_daily_cleanup' );
+        }
+    }
+
     public function admin_hardening_headers() {
         if ( ! headers_sent() ) {
             header( 'X-Content-Type-Options: nosniff' );
@@ -99,6 +112,26 @@ class GNN_SMTPMail {
     private function get_settings() {
         $s = get_option( GNN_SMTPMAIL_OPTION, array() );
         return $s;
+    }
+
+    /**
+     * Resolve SMTP password, preferring wp-config.php constant override.
+     */
+    private function get_smtp_password( $custom_settings ) {
+        if ( defined( 'GNN_SMTPMAIL_SMTP_PASS' ) && is_string( GNN_SMTPMAIL_SMTP_PASS ) ) {
+            return GNN_SMTPMAIL_SMTP_PASS;
+        }
+        return (string) ( $custom_settings['password'] ?? '' );
+    }
+
+    /**
+     * Resolve Brevo API key, preferring wp-config.php constant override.
+     */
+    private function get_brevo_api_key( $brevo_settings ) {
+        if ( defined( 'GNN_SMTPMAIL_BREVO_KEY' ) && is_string( GNN_SMTPMAIL_BREVO_KEY ) ) {
+            return GNN_SMTPMAIL_BREVO_KEY;
+        }
+        return (string) ( $brevo_settings['api_key'] ?? '' );
     }
 
     private function get_from_email_name() {
@@ -156,9 +189,40 @@ class GNN_SMTPMail {
         }
         if ( $phpmailer->SMTPAuth ) {
             $phpmailer->Username = (string) ( $c['username'] ?? '' );
-            $phpmailer->Password = (string) ( $c['password'] ?? '' );
+            $phpmailer->Password = $this->get_smtp_password( $c );
         }
         $phpmailer->SMTPAutoTLS = true;
+    }
+
+    /**
+     * Parse comma-separated email addresses (optionally with display names) into Brevo recipient objects.
+     *
+     * @param string|array $raw_addresses Raw email address list.
+     * @return array
+     */
+    private function parse_email_address_list( $raw_addresses ) {
+        $result = array();
+        $items  = is_array( $raw_addresses ) ? $raw_addresses : explode( ',', (string) $raw_addresses );
+        foreach ( $items as $item ) {
+            $item = trim( $item );
+            if ( empty( $item ) ) {
+                continue;
+            }
+            if ( preg_match( '/^(.*)<([^>]+)>$/', $item, $matches ) ) {
+                $name  = trim( trim( $matches[1] ), " \t\n\r\0\x0B\"'" );
+                $email = trim( $matches[2] );
+                if ( is_email( $email ) ) {
+                    $entry = array( 'email' => $email );
+                    if ( ! empty( $name ) ) {
+                        $entry['name'] = $name;
+                    }
+                    $result[] = $entry;
+                }
+            } elseif ( is_email( $item ) ) {
+                $result[] = array( 'email' => $item );
+            }
+        }
+        return $result;
     }
 
     public function pre_wp_mail_handler( $null, $atts ) {
@@ -178,7 +242,7 @@ class GNN_SMTPMail {
         $attachments = isset( $atts['attachments'] ) ? $atts['attachments'] : array();
 
         $brevo = isset( $s['brevo'] ) ? $s['brevo'] : array();
-        $api_key = isset( $brevo['api_key'] ) ? $brevo['api_key'] : '';
+        $api_key = $this->get_brevo_api_key( $brevo );
 
         if ( empty( $api_key ) ) {
             $error = new WP_Error( 'brevo_missing_api_key', __( 'Brevo API Key is missing.', 'gnn-smtpmail' ) );
@@ -188,21 +252,7 @@ class GNN_SMTPMail {
         }
 
         // Build To array
-        $to_emails = array();
-        if ( is_array( $to ) ) {
-            foreach ( $to as $email ) {
-                if ( is_email( $email ) ) {
-                    $to_emails[] = array( 'email' => trim($email) );
-                }
-            }
-        } else {
-            $emails = explode( ',', $to );
-            foreach ( $emails as $email ) {
-                if ( is_email( trim($email) ) ) {
-                    $to_emails[] = array( 'email' => trim($email) );
-                }
-            }
-        }
+        $to_emails = $this->parse_email_address_list( $to );
 
         if ( empty( $to_emails ) ) {
             $error = new WP_Error( 'brevo_invalid_recipient', __( 'Invalid or empty recipient email address.', 'gnn-smtpmail' ) );
@@ -223,6 +273,8 @@ class GNN_SMTPMail {
         // Parse headers
         $content_type = apply_filters( 'wp_mail_content_type', 'text/plain' );
         $reply_to = '';
+        $cc_emails = array();
+        $bcc_emails = array();
         $custom_headers = array();
         if ( ! empty( $headers ) ) {
             $headers_arr = is_array( $headers ) ? $headers : explode( "\n", str_replace( "\r", '', $headers ) );
@@ -239,6 +291,10 @@ class GNN_SMTPMail {
                     } else {
                         $reply_to = $value;
                     }
+                } elseif ( strcasecmp( $name, 'Cc' ) === 0 ) {
+                    $cc_emails = array_merge( $cc_emails, $this->parse_email_address_list( $value ) );
+                } elseif ( strcasecmp( $name, 'Bcc' ) === 0 ) {
+                    $bcc_emails = array_merge( $bcc_emails, $this->parse_email_address_list( $value ) );
                 } elseif ( strcasecmp( $name, 'Content-Type' ) === 0 ) {
                     if ( strpos( strtolower( $value ), 'text/html' ) !== false ) {
                         $content_type = 'text/html';
@@ -259,6 +315,13 @@ class GNN_SMTPMail {
             'subject' => $subject,
         );
 
+        if ( ! empty( $cc_emails ) ) {
+            $body['cc'] = $cc_emails;
+        }
+        if ( ! empty( $bcc_emails ) ) {
+            $body['bcc'] = $bcc_emails;
+        }
+
         if ( $content_type === 'text/html' ) {
             $body['htmlContent'] = $message;
             $body['textContent'] = wp_strip_all_tags( $message );
@@ -278,16 +341,33 @@ class GNN_SMTPMail {
         // Attachments
         if ( ! empty( $attachments ) ) {
             $brevo_attachments = array();
+            $upload_dir = wp_upload_dir();
+            $allowed_roots = array_filter( array(
+                realpath( ABSPATH ),
+                defined( 'WP_CONTENT_DIR' ) ? realpath( WP_CONTENT_DIR ) : false,
+                ! empty( $upload_dir['basedir'] ) ? realpath( $upload_dir['basedir'] ) : false,
+            ) );
+
             foreach ( $attachments as $attachment ) {
                 $real_path = realpath( $attachment );
                 if ( false !== $real_path && file_exists( $real_path ) && is_file( $real_path ) ) {
-                    $abspath_real = realpath( ABSPATH );
-                    if ( 0 === strpos( $real_path, $abspath_real ) ) {
+                    $norm_path = wp_normalize_path( $real_path );
+                    $is_allowed = false;
+                    foreach ( $allowed_roots as $root ) {
+                        $norm_root = trailingslashit( wp_normalize_path( $root ) );
+                        if ( 0 === stripos( $norm_path, $norm_root ) ) {
+                            $is_allowed = true;
+                            break;
+                        }
+                    }
+                    if ( $is_allowed ) {
                         $file_content = file_get_contents( $real_path );
-                        $brevo_attachments[] = array(
-                            'content' => base64_encode( $file_content ),
-                            'name'    => basename( $real_path ),
-                        );
+                        if ( false !== $file_content ) {
+                            $brevo_attachments[] = array(
+                                'content' => base64_encode( $file_content ),
+                                'name'    => basename( $real_path ),
+                            );
+                        }
                     }
                 }
             }

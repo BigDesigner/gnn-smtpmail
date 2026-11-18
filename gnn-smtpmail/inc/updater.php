@@ -61,7 +61,7 @@ class GNN_SMTPMail_Updater
         if (!function_exists('get_plugin_data')) {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
-        $plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . $this->plugin_slug);
+        $plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . $this->plugin_slug, false, false);
         return $plugin_data['Version'];
     }
 
@@ -71,6 +71,9 @@ class GNN_SMTPMail_Updater
     private function get_remote_release()
     {
         $cached = get_transient($this->transient_key);
+        if ('error' === $cached) {
+            return false;
+        }
         if (false !== $cached) {
             return $cached;
         }
@@ -87,7 +90,7 @@ class GNN_SMTPMail_Updater
         $response = wp_remote_get($url, $args);
 
         if (is_wp_error($response) || 200 !== wp_remote_retrieve_response_code($response)) {
-            set_transient($this->transient_key, false, 300); // Cache failure for 5 mins
+            set_transient($this->transient_key, 'error', 300); // Cache failure for 5 mins
             return false;
         }
 
@@ -118,12 +121,12 @@ class GNN_SMTPMail_Updater
             return false;
         }
 
-        // Validate download URL is from github.com
+        // Validate download URL is HTTPS and from GitHub
         $parsed = wp_parse_url( $download_url );
-        if ( empty( $parsed['host'] ) || ! in_array( $parsed['host'], array( 'github.com', 'codeload.github.com' ), true ) ) {
+        if ( empty( $parsed['scheme'] ) || 'https' !== strtolower( $parsed['scheme'] ) || empty( $parsed['host'] ) || ! in_array( $parsed['host'], array( 'github.com', 'codeload.github.com', 'objects.githubusercontent.com' ), true ) ) {
             return false;
         }
-        $download_url = esc_url_raw( $download_url );
+        $download_url = esc_url_raw( $download_url, array( 'https' ) );
 
         $release_data = (object) array(
             'version'      => $remote_version,
@@ -188,6 +191,9 @@ class GNN_SMTPMail_Updater
             'version'       => $release->version,
             'author'        => 'BigDesigner',
             'homepage'      => 'https://github.com/BigDesigner/gnn-smtpmail',
+            'requires'      => '6.2',
+            'tested'        => '7.1.4',
+            'requires_php'  => '7.4',
             'download_link' => $release->download_url,
             'sections'      => array(
                 'description' => 'Custom SMTP ile WordPress e-posta gönderimini güvenli şekilde yapılandırın. Test e-postası gönderin, hata/success loglarını görüntüleyin ve kaldırırken tüm verileri temizleyin.',
@@ -210,8 +216,12 @@ class GNN_SMTPMail_Updater
         
         // Ensure the directory is correctly named
         if ($result['destination'] !== $plugin_dir) {
-            $wp_filesystem->move($result['destination'], $plugin_dir);
+            $wp_filesystem->move($result['destination'], $plugin_dir, true);
             $result['destination'] = $plugin_dir;
+        }
+
+        if (function_exists('is_plugin_active') && is_plugin_active($this->plugin_slug)) {
+            activate_plugin($this->plugin_slug);
         }
 
         delete_transient($this->transient_key);

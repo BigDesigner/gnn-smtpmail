@@ -19,6 +19,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v7
 
+      - name: PHP Syntax Check
+        run: find gnn-smtpmail -name "*.php" -print0 | xargs -0 -n1 php -l
+
       - name: Extract Version from gnn-smtpmail/gnn-smtpmail.php
         id: get_version
         run: |
