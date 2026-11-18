@@ -1,8 +1,9 @@
 === GNN SMTPMail ===
 Contributors: BigDesigner
-Requires at least: 5.2
-Tested up to: 6.6
-Stable tag: 1.5.4
+Requires at least: 6.2
+Tested up to: 7.1.4
+Requires PHP: 7.4
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +23,18 @@ YALNIZCA Custom SMTP ile WordPress e-postalarını güvenle gönderin. Test mail
 3. Yönetim panelinde **GNN SMTPMail → Custom SMTP** bölümünden ayarlarınızı yapın.
 
 == Değişiklikler ==
+= 1.6.0 =
+* Kurşun geçirmezlik & WP 7.1.4 uyumluluk güncellemesi:
+  * Her sayfa isteğinde çalışan `SHOW TABLES` sorgusu ve global `upgrade.php` yüklemesi kaldırıldı (lazy DB kontrolü).
+  * Brevo API kanalında `Cc:` ve `Bcc:` alıcı ayrıştırma desteği eklendi.
+  * Ek dosya yol doğrulaması `ABSPATH`, `WP_CONTENT_DIR` ve `uploads` köklerini destekleyecek şekilde güncellendi.
+  * 30 günden eski logları temizleyen günlük WP-Cron eklendi.
+  * `wp-config.php` üzerinden `GNN_SMTPMAIL_SMTP_PASS` ve `GNN_SMTPMAIL_BREVO_KEY` sabit desteği eklendi.
+  * `load_plugin_textdomain()` `init` (priority 1) kancasına eklendi ve `languages/gnn-smtpmail.pot` oluşturuldu.
+  * Updater hata önbelleklemesi (`'error'` sentinel), HTTPS/CDN host doğrulaması, `$overwrite = true` ve `requires`/`tested` meta verileri düzeltildi.
+  * jQuery bağımlılığı kaldırılarak Vanilla JS'e geçildi, WCAG erişilebilirlik ve mobil tablo uyumluluğu eklendi.
+  * Multisite ve tam uninstall temizliği eklendi.
+
 = 1.5.4 =
 * Depo yapısı düzenlendi: eklenti dosyaları repo kökünden `gnn-smtpmail/` alt klasörüne taşındı ve release iş akışı bu yapıya göre sadeleştirildi.
 

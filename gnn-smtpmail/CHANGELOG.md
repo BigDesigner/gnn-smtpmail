@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - 2026-11-18
+
+### Added
+- Brevo API v3 `Cc:` and `Bcc:` header parsing into structured JSON `cc`/`bcc` arrays.
+- Automated daily WP-Cron log pruning (`gnn_smtpmail_daily_cleanup`, default 30 days via `gnn_smtpmail_log_retention_days` filter).
+- `wp-config.php` constant overrides (`GNN_SMTPMAIL_SMTP_PASS`, `GNN_SMTPMAIL_BREVO_KEY`) with admin UI indicators.
+- `load_plugin_textdomain()` on `init` (priority 1) and `languages/gnn-smtpmail.pot` translation template.
+- Multisite-aware `uninstall.php` cleanup for all plugin options, transients, cron hooks, and log tables.
+- PHP syntax lint step (`php -l`) in `.github/workflows/release.yml`.
+
+### Changed
+- Eliminated per-request `SHOW TABLES` query and global `upgrade.php` loading; schema checks now run lazily on activation/version change.
+- Expanded attachment path validation to normalized `ABSPATH`, `WP_CONTENT_DIR`, and `wp_upload_dir()` roots.
+- Replaced jQuery dependency in `assets/admin.js` with Vanilla JS; added WCAG `<label for>`, `scope="col"`, `:focus-visible`, and responsive table wrapper.
+- Updated `Requires at least` (`6.2`), `Tested up to` (`7.1.4`), `Requires PHP` (`7.4`), and `actions/github-script@v9`.
+
+### Fixed
+- Fixed GitHub Updater error transient caching (`'error'` sentinel instead of `false`), `get_plugin_data(..., false, false)`, HTTPS scheme check, `objects.githubusercontent.com` host allowlist, and `$wp_filesystem->move(..., true)` overwrite flag.
+- Added `rel="noopener noreferrer"` to external Donate link and capability guards to all admin page renderers.
+
 ## [1.5.4] - 2026-08-05
 
 ### Changed

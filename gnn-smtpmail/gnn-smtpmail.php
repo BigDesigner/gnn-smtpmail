@@ -3,22 +3,24 @@
  * Plugin Name: GNN SMTPMail
  * Plugin URI:  https://github.com/BigDesigner/gnn-smtpmail
  * Description: Custom SMTP ile WordPress e-posta gönderimini güvenli şekilde yapılandırın. Test e-postası gönderin, hata/success loglarını görüntüleyin ve kaldırırken tüm verileri temizleyin.
- * Version: 1.5.4
+ * Version: 1.6.0
+ * Requires at least: 6.2
+ * Requires PHP: 7.4
  * Author:      BigDesigner
  * Author URI:  https://github.com/BigDesigner
  * Text Domain: gnn-smtpmail
+ * Domain Path: /languages
  */
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'GNN_SMTPMAIL_VERSION', '1.5.4' );
+define( 'GNN_SMTPMAIL_VERSION', '1.6.0' );
 define( 'GNN_SMTPMAIL_FILE', __FILE__ );
 define( 'GNN_SMTPMAIL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GNN_SMTPMAIL_URL', plugin_dir_url( __FILE__ ) );
 define( 'GNN_SMTPMAIL_OPTION', 'gnn_smtpmail_settings' );
 define( 'GNN_SMTPMAIL_TABLE', 'gnn_smtpmail_logs' );
 
-require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 require_once GNN_SMTPMAIL_DIR . 'includes/class-gnn-smtpmail-logger.php';
 require_once GNN_SMTPMAIL_DIR . 'includes/class-gnn-smtpmail.php';
 require_once GNN_SMTPMAIL_DIR . 'inc/updater.php';
@@ -29,10 +31,18 @@ register_deactivation_hook( __FILE__, array( 'GNN_SMTPMail', 'deactivate' ) );
 add_action( 'plugins_loaded', array( 'GNN_SMTPMail', 'instance' ) );
 
 /**
+ * Load plugin textdomain on init (WP 6.7+ compatible).
+ */
+function gnn_smtpmail_load_textdomain() {
+    load_plugin_textdomain( 'gnn-smtpmail', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+}
+add_action( 'init', 'gnn_smtpmail_load_textdomain', 1 );
+
+/**
  * Add plugin action links
  */
 function gnn_smtpmail_plugin_links( $links ) {
-    $donate_link = '<a href="' . esc_url( 'https://buymeacoffee.com/bigdesigner' ) . '" target="_blank" style="font-weight:bold; color:#d63638;">' . esc_html__( 'Donate', 'gnn-smtpmail' ) . '</a>';
+    $donate_link = '<a href="' . esc_url( 'https://buymeacoffee.com/bigdesigner' ) . '" target="_blank" rel="noopener noreferrer" style="font-weight:bold; color:#d63638;">' . esc_html__( 'Donate', 'gnn-smtpmail' ) . '</a>';
     $settings_link = '<a href="' . esc_url( admin_url( 'admin.php?page=gnn-smtpmail-custom' ) ) . '">' . esc_html__( 'Settings', 'gnn-smtpmail' ) . '</a>';
     $update_url = wp_nonce_url( admin_url( 'plugins.php?gnn_smtpmail_check_update=1' ), 'gnn_smtpmail_manual_update' );
     $update_link = '<a href="' . esc_url( $update_url ) . '">' . esc_html__( 'Check Updates', 'gnn-smtpmail' ) . '</a>';
