@@ -1,10 +1,20 @@
 /* Admin styles */
-.gnn-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-.gnn-inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.gnn-grid { display: flex; flex-wrap: wrap; gap: 0.625rem; margin-top: 0.625rem; }
+.gnn-inline { display: flex; flex-wrap: wrap; gap: 0.625rem; align-items: center; }
 .gnn-table-responsive { overflow-x: auto; max-width: 100%; }
-.gnn-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+.gnn-notice-spaced { margin-top: 0.625rem; }
+.gnn-form-spaced { margin-top: 0.625rem; }
+.gnn-table-spaced { margin-top: 0.9375rem; }
+.gnn-clear-secret { display: inline-block; margin-top: 0.375rem; }
+.gnn-text-error { color: var(--wp--preset--color--vivid-red, #d63638); }
+.gnn-text-success { color: var(--wp--preset--color--vivid-green-cyan, #00a32a); }
+.gnn-text-bold { font-weight: 600; }
+.gnn-badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-weight: 600; }
 .gnn-badge.success { background: #e6ffed; border: 1px solid #a5d6a7; color: #1b5e20; }
 .gnn-badge.error { background: #ffe6e6; border: 1px solid #ef9a9a; color: #b71c1c; }
 .gnn-grid a:focus-visible,
 .gnn-inline button:focus-visible,
-.gnn-inline select:focus-visible { outline: 2px solid #2271b1; outline-offset: 2px; }
+.gnn-inline select:focus-visible,
+.gnn-settings-section input:focus-visible,
+.gnn-settings-section select:focus-visible,
+.gnn-settings-section textarea:focus-visible { outline: 2px solid var(--wp-admin-theme-color, #2271b1); outline-offset: 2px; }

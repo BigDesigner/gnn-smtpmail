@@ -123,7 +123,14 @@ class GNN_SMTPMail_Updater
 
         // Validate download URL is HTTPS and from GitHub
         $parsed = wp_parse_url( $download_url );
-        if ( empty( $parsed['scheme'] ) || 'https' !== strtolower( $parsed['scheme'] ) || empty( $parsed['host'] ) || ! in_array( $parsed['host'], array( 'github.com', 'codeload.github.com', 'objects.githubusercontent.com' ), true ) ) {
+        $allowed_hosts = array(
+            'github.com',
+            'api.github.com',
+            'codeload.github.com',
+            'objects.githubusercontent.com',
+            'release-assets.githubusercontent.com',
+        );
+        if ( empty( $parsed['scheme'] ) || 'https' !== strtolower( $parsed['scheme'] ) || empty( $parsed['host'] ) || ! in_array( strtolower( $parsed['host'] ), $allowed_hosts, true ) ) {
             return false;
         }
         $download_url = esc_url_raw( $download_url, array( 'https' ) );
@@ -159,11 +166,14 @@ class GNN_SMTPMail_Updater
 
         if (version_compare($release->version, $local_version, '>')) {
             $obj = new stdClass();
-            $obj->slug        = 'gnn-smtpmail';
-            $obj->plugin      = $this->plugin_slug;
-            $obj->new_version = $release->version;
-            $obj->url         = $release->html_url;
-            $obj->package     = $release->download_url;
+            $obj->slug         = 'gnn-smtpmail';
+            $obj->plugin       = $this->plugin_slug;
+            $obj->new_version  = $release->version;
+            $obj->url          = $release->html_url;
+            $obj->package      = $release->download_url;
+            $obj->requires     = '6.2';
+            $obj->tested       = '7.1.5';
+            $obj->requires_php = '7.4';
             
             $transient->response[$this->plugin_slug] = $obj;
         }
@@ -176,7 +186,7 @@ class GNN_SMTPMail_Updater
      */
     public function plugin_info($result, $action, $args)
     {
-        if ('plugin_information' !== $action || 'gnn-smtpmail' !== $args->slug) {
+        if ('plugin_information' !== $action || empty($args->slug) || 'gnn-smtpmail' !== $args->slug) {
             return $result;
         }
 
@@ -192,7 +202,7 @@ class GNN_SMTPMail_Updater
             'author'        => 'BigDesigner',
             'homepage'      => 'https://github.com/BigDesigner/gnn-smtpmail',
             'requires'      => '6.2',
-            'tested'        => '7.1.4',
+            'tested'        => '7.1.5',
             'requires_php'  => '7.4',
             'download_link' => $release->download_url,
             'sections'      => array(
@@ -212,10 +222,14 @@ class GNN_SMTPMail_Updater
         }
 
         global $wp_filesystem;
+        if ( ! $wp_filesystem ) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+            WP_Filesystem();
+        }
         $plugin_dir = WP_PLUGIN_DIR . '/gnn-smtpmail';
         
         // Ensure the directory is correctly named
-        if ($result['destination'] !== $plugin_dir) {
+        if ( $wp_filesystem && $result['destination'] !== $plugin_dir ) {
             $wp_filesystem->move($result['destination'], $plugin_dir, true);
             $result['destination'] = $plugin_dir;
         }

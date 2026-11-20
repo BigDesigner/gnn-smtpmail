@@ -110,7 +110,7 @@ class GNN_SMTPMail_Logger {
         if ( $days < 1 ) {
             return;
         }
-        $cutoff = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
+        $cutoff = wp_date( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
         $wpdb->query(
             $wpdb->prepare(
                 "DELETE FROM `" . esc_sql( $table ) . "` WHERE logged_at < %s",

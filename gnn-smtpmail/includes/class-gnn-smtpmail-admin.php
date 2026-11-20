@@ -53,25 +53,51 @@ class GNN_SMTPMail_Admin {
             $smtp_pass_const   = defined( 'GNN_SMTPMAIL_SMTP_PASS' ) && is_string( GNN_SMTPMAIL_SMTP_PASS );
             $brevo_key_const   = defined( 'GNN_SMTPMAIL_BREVO_KEY' ) && is_string( GNN_SMTPMAIL_BREVO_KEY );
 
+            $port = isset( $_POST['port'] ) ? intval( $_POST['port'] ) : 587;
+            if ( $port < 1 || $port > 65535 ) {
+                $port = 587;
+            }
+
+            if ( $smtp_pass_const ) {
+                $smtp_password = (string) ( $existing_settings['custom']['password'] ?? '' );
+            } elseif ( ! empty( $_POST['clear_smtp_password'] ) ) {
+                $smtp_password = '';
+            } elseif ( isset( $_POST['password'] ) && '' !== $_POST['password'] ) {
+                $smtp_password = (string) wp_unslash( $_POST['password'] );
+            } else {
+                $smtp_password = (string) ( $existing_settings['custom']['password'] ?? '' );
+            }
+
             $custom = array(
                 'enabled'     => isset($_POST['enabled']) ? 1 : 0,
                 'host'        => isset($_POST['host']) ? sanitize_text_field( wp_unslash($_POST['host']) ) : '',
-                'port'        => isset($_POST['port']) ? intval($_POST['port']) : 587,
+                'port'        => $port,
                 'smtp_secure' => isset($_POST['smtp_secure']) && in_array($_POST['smtp_secure'], array('ssl','tls','none'), true) ? sanitize_text_field( wp_unslash($_POST['smtp_secure']) ) : 'tls',
                 'auth'        => isset($_POST['auth']) ? 1 : 0,
                 'username'    => isset($_POST['username']) ? sanitize_text_field( wp_unslash($_POST['username']) ) : '',
-                'password'    => $smtp_pass_const ? (string) ( $existing_settings['custom']['password'] ?? '' ) : ( isset($_POST['password']) ? (string) wp_unslash($_POST['password']) : '' ),
+                'password'    => $smtp_password,
                 'from_email'  => isset($_POST['from_email']) ? sanitize_email( wp_unslash($_POST['from_email']) ) : '',
                 'from_name'   => isset($_POST['from_name']) ? sanitize_text_field( wp_unslash($_POST['from_name']) ) : '',
             );
 
-            $brevo_api_key = $brevo_key_const ? (string) ( $existing_settings['brevo']['api_key'] ?? '' ) : ( isset($_POST['brevo_api_key']) ? sanitize_text_field( wp_unslash($_POST['brevo_api_key']) ) : '' );
+            if ( $brevo_key_const ) {
+                $brevo_api_key = (string) ( $existing_settings['brevo']['api_key'] ?? '' );
+            } elseif ( ! empty( $_POST['clear_brevo_api_key'] ) ) {
+                $brevo_api_key = '';
+            } elseif ( isset( $_POST['brevo_api_key'] ) && '' !== trim( (string) wp_unslash( $_POST['brevo_api_key'] ) ) ) {
+                $brevo_api_key = sanitize_text_field( wp_unslash( $_POST['brevo_api_key'] ) );
+            } else {
+                $brevo_api_key = (string) ( $existing_settings['brevo']['api_key'] ?? '' );
+            }
+
             $brevo_sender_select = isset($_POST['brevo_sender_select']) ? sanitize_text_field( wp_unslash($_POST['brevo_sender_select']) ) : '';
             $brevo_from_name = '';
             $brevo_from_email = '';
 
             if ( ! empty( $brevo_sender_select ) && strpos( $brevo_sender_select, '|' ) !== false ) {
-                list( $brevo_from_name, $brevo_from_email ) = explode( '|', $brevo_sender_select, 2 );
+                list( $raw_brevo_name, $raw_brevo_email ) = explode( '|', $brevo_sender_select, 2 );
+                $brevo_from_name  = sanitize_text_field( trim( $raw_brevo_name ) );
+                $brevo_from_email = sanitize_email( trim( $raw_brevo_email ) );
             }
 
             $brevo = array(
@@ -172,7 +198,7 @@ class GNN_SMTPMail_Admin {
                 </table>
 
                 <div id="gnn_section_custom" class="gnn-settings-section"<?php echo $mailer_type === 'custom' ? '' : ' hidden'; ?>>
-                    <h3><?php esc_html_e('Custom SMTP Ayarları', 'gnn-smtpmail'); ?></h3>
+                    <h2><?php esc_html_e('Custom SMTP Ayarları', 'gnn-smtpmail'); ?></h2>
                     <table class="form-table" role="presentation">
                         <tr>
                             <th scope="row"><label for="gnn_smtp_enabled"><?php esc_html_e('Custom SMTP\'yi Etkinleştir', 'gnn-smtpmail'); ?></label></th>
@@ -184,7 +210,7 @@ class GNN_SMTPMail_Admin {
                         </tr>
                         <tr>
                             <th scope="row"><label for="gnn_smtp_port"><?php esc_html_e('Port', 'gnn-smtpmail'); ?></label></th>
-                            <td><input type="number" id="gnn_smtp_port" name="port" value="<?php echo esc_attr( $c['port'] ?? 587 ); ?>" /></td>
+                            <td><input type="number" id="gnn_smtp_port" name="port" min="1" max="65535" value="<?php echo esc_attr( $c['port'] ?? 587 ); ?>" /></td>
                         </tr>
                         <tr>
                             <th scope="row"><label for="gnn_smtp_secure"><?php esc_html_e('Şifreleme', 'gnn-smtpmail'); ?></label></th>
@@ -212,7 +238,12 @@ class GNN_SMTPMail_Admin {
                                     <input type="password" id="gnn_smtp_password" value="********" class="regular-text" disabled />
                                     <p class="description"><?php esc_html_e('wp-config.php içerisinde GNN_SMTPMAIL_SMTP_PASS sabiti ile tanımlandı.', 'gnn-smtpmail'); ?></p>
                                 <?php else : ?>
-                                    <input type="password" id="gnn_smtp_password" name="password" value="<?php echo esc_attr( $c['password'] ?? '' ); ?>" class="regular-text" autocomplete="new-password" />
+                                    <?php $has_smtp_pass = ! empty( $c['password'] ); ?>
+                                    <input type="password" id="gnn_smtp_password" name="password" value="" placeholder="<?php echo $has_smtp_pass ? '••••••••' : ''; ?>" class="regular-text" autocomplete="new-password" />
+                                    <?php if ( $has_smtp_pass ) : ?>
+                                        <p class="description"><?php esc_html_e('Mevcut şifre kayıtlıdır. Değiştirmek istemiyorsanız boş bırakın.', 'gnn-smtpmail'); ?></p>
+                                        <label class="gnn-clear-secret"><input type="checkbox" name="clear_smtp_password" value="1" /> <?php esc_html_e('Kayıtlı şifreyi temizle', 'gnn-smtpmail'); ?></label>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -228,7 +259,7 @@ class GNN_SMTPMail_Admin {
                 </div>
 
                 <div id="gnn_section_brevo" class="gnn-settings-section"<?php echo $mailer_type === 'brevo' ? '' : ' hidden'; ?>>
-                    <h3><?php esc_html_e('Brevo API Ayarları', 'gnn-smtpmail'); ?></h3>
+                    <h2><?php esc_html_e('Brevo API Ayarları', 'gnn-smtpmail'); ?></h2>
                     <?php
                     $senders = array();
                     $api_error = '';
@@ -275,8 +306,14 @@ class GNN_SMTPMail_Admin {
                                     <input type="password" id="gnn_brevo_api_key" value="********" class="regular-text" disabled />
                                     <p class="description"><?php esc_html_e('wp-config.php içerisinde GNN_SMTPMAIL_BREVO_KEY sabiti ile tanımlandı.', 'gnn-smtpmail'); ?></p>
                                 <?php else : ?>
-                                    <input type="password" id="gnn_brevo_api_key" name="brevo_api_key" value="<?php echo esc_attr( $b['api_key'] ?? '' ); ?>" class="regular-text" autocomplete="new-password" />
-                                    <p class="description"><?php esc_html_e('Brevo hesabınızdaki API Key değerini buraya girin ve kaydedin.', 'gnn-smtpmail'); ?></p>
+                                    <?php $has_brevo_key = ! empty( $b['api_key'] ); ?>
+                                    <input type="password" id="gnn_brevo_api_key" name="brevo_api_key" value="" placeholder="<?php echo $has_brevo_key ? '••••••••' : ''; ?>" class="regular-text" autocomplete="new-password" />
+                                    <?php if ( $has_brevo_key ) : ?>
+                                        <p class="description"><?php esc_html_e('Mevcut API anahtarı kayıtlıdır. Değiştirmek istemiyorsanız boş bırakın.', 'gnn-smtpmail'); ?></p>
+                                        <label class="gnn-clear-secret"><input type="checkbox" name="clear_brevo_api_key" value="1" /> <?php esc_html_e('Kayıtlı API anahtarını temizle', 'gnn-smtpmail'); ?></label>
+                                    <?php else : ?>
+                                        <p class="description"><?php esc_html_e('Brevo hesabınızdaki API Key değerini buraya girin ve kaydedin.', 'gnn-smtpmail'); ?></p>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -284,14 +321,14 @@ class GNN_SMTPMail_Admin {
                             <tr>
                                 <th scope="row"><?php esc_html_e('Gönderici Seçin', 'gnn-smtpmail'); ?></th>
                                 <td>
-                                    <span class="description" style="color: #d63638;"><?php esc_html_e('Gönderici seçmek için önce API anahtarınızı girip kaydedin.', 'gnn-smtpmail'); ?></span>
+                                    <span class="description gnn-text-error"><?php esc_html_e('Gönderici seçmek için önce API anahtarınızı girip kaydedin.', 'gnn-smtpmail'); ?></span>
                                 </td>
                             </tr>
                         <?php elseif ( ! empty( $api_error ) ) : ?>
                             <tr>
                                 <th scope="row"><?php esc_html_e('Gönderici Seçin', 'gnn-smtpmail'); ?></th>
                                 <td>
-                                    <span class="description" style="color: #d63638;"><?php echo esc_html( $api_error ); ?></span>
+                                    <span class="description gnn-text-error"><?php echo esc_html( $api_error ); ?></span>
                                 </td>
                             </tr>
                         <?php else : ?>
@@ -349,13 +386,11 @@ class GNN_SMTPMail_Admin {
         <div class="wrap">
             <h1><?php esc_html_e('Test Mail Gönder', 'gnn-smtpmail'); ?></h1>
             <?php settings_errors( 'gnn-smtpmail' ); ?>
-            <p>
             <?php if ( ! $active ) : ?>
-                <span class="notice notice-warning inline"><p><?php echo sprintf( esc_html__('%s şu an devre dışı veya yapılandırılmamış.', 'gnn-smtpmail'), esc_html( $channel_name ) ); ?></p></span>
+                <div class="notice notice-warning inline"><p><?php echo sprintf( esc_html__('%s şu an devre dışı veya yapılandırılmamış.', 'gnn-smtpmail'), esc_html( $channel_name ) ); ?></p></div>
             <?php else : ?>
-                <strong><?php echo sprintf( esc_html__('Aktif kanal: %s', 'gnn-smtpmail'), esc_html( $channel_name ) ); ?></strong>
+                <p><strong><?php echo sprintf( esc_html__('Aktif kanal: %s', 'gnn-smtpmail'), esc_html( $channel_name ) ); ?></strong></p>
             <?php endif; ?>
-            </p>
             <form method="post">
                 <?php wp_nonce_field( 'gnn_test_send_action', 'gnn_test_nonce' ); ?>
                 <table class="form-table" role="presentation">
@@ -414,26 +449,26 @@ class GNN_SMTPMail_Admin {
                 $has_issue = ! $table_exists || $has_conflict || ! empty( $last_insert_error ) || ! empty( $last_db_error );
 
                 if ( $has_issue ) {
-                    echo '<div class="notice notice-info inline" style="margin-top:10px;"><p>';
-                    if ($table_exists) {
+                    echo '<div class="notice notice-info inline gnn-notice-spaced"><p>';
+                    if ( $table_exists ) {
                         $count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `" . esc_sql( $table ) . "`" );
-                        echo '<strong>Sistem Bilgisi:</strong> Log tablosu aktif. Toplam log satırı: ' . intval($count) . '<br>';
+                        echo '<strong>' . esc_html__( 'Sistem Bilgisi:', 'gnn-smtpmail' ) . '</strong> ' . sprintf( esc_html__( 'Log tablosu aktif. Toplam log satırı: %d', 'gnn-smtpmail' ), intval( $count ) ) . '<br>';
                         
-                        echo '<strong>wp_mail() Kaynağı:</strong> ';
+                        echo '<strong>' . esc_html__( 'wp_mail() Kaynağı:', 'gnn-smtpmail' ) . '</strong> ';
                         if ( ! $has_conflict ) {
-                            echo '<span style="color:#2ec4b6;">wp-includes/pluggable.php (Çekirdek - Uyumlu)</span><br>';
+                            echo '<span class="gnn-text-success">' . esc_html__( 'wp-includes/pluggable.php (Çekirdek - Uyumlu)', 'gnn-smtpmail' ) . '</span><br>';
                         } else {
-                            echo '<span style="color:#d63638; font-weight:bold;">' . esc_html( $wp_mail_defined_in ) . ' (Çakışma! Başka bir eklenti wp_mail() fonksiyonunu ele geçirmiş durumda. Bizim eklentimiz pasif kalacaktır.)</span><br>';
+                            echo '<span class="gnn-text-error gnn-text-bold">' . esc_html( $wp_mail_defined_in ) . ' ' . esc_html__( '(Çakışma! Başka bir eklenti wp_mail() fonksiyonunu ele geçirmiş durumda. Bizim eklentimiz pasif kalacaktır.)', 'gnn-smtpmail' ) . '</span><br>';
                         }
                         
                         if ( ! empty( $last_insert_error ) ) {
-                            echo '<strong style="color:#d63638;">Son Log Kayıt Hatası:</strong> ' . esc_html( $last_insert_error ) . '<br>';
+                            echo '<strong class="gnn-text-error">' . esc_html__( 'Son Log Kayıt Hatası:', 'gnn-smtpmail' ) . '</strong> ' . esc_html( $last_insert_error ) . '<br>';
                         }
                         if ( ! empty( $last_db_error ) ) {
-                            echo 'Son Veri Tabanı Hatası: ' . esc_html( $last_db_error ) . '<br>';
+                            echo esc_html__( 'Son Veri Tabanı Hatası:', 'gnn-smtpmail' ) . ' ' . esc_html( $last_db_error ) . '<br>';
                         }
                     } else {
-                        echo '<strong>Sistem Hatası:</strong> `' . esc_html($table) . '` tablosu veri tabanında bulunamadı!';
+                        echo '<strong>' . esc_html__( 'Sistem Hatası:', 'gnn-smtpmail' ) . '</strong> ' . sprintf( esc_html__( '`%s` tablosu veri tabanında bulunamadı!', 'gnn-smtpmail' ), esc_html( $table ) );
                     }
                     echo '</p></div>';
                 }
@@ -453,13 +488,13 @@ class GNN_SMTPMail_Admin {
                 <button class="button"><?php esc_html_e('Filtrele', 'gnn-smtpmail'); ?></button>
             </form>
 
-            <form method="post" style="margin-top:10px;">
+            <form method="post" class="gnn-form-spaced">
                 <?php wp_nonce_field( 'gnn_clear_logs_action', 'gnn_clear_logs_nonce' ); ?>
                 <button type="submit" name="gnn_clear_logs" class="button"><?php esc_html_e('Tüm Logları Temizle', 'gnn-smtpmail'); ?></button>
             </form>
 
             <div class="gnn-table-responsive">
-            <table class="widefat striped" style="margin-top:15px;">
+            <table class="widefat striped gnn-table-spaced">
                 <thead>
                 <tr>
                     <th scope="col"><?php esc_html_e('Tarih', 'gnn-smtpmail'); ?></th>
@@ -491,14 +526,20 @@ class GNN_SMTPMail_Admin {
                 <div class="tablenav">
                     <div class="tablenav-pages">
                         <?php
-                        echo paginate_links( array(
-                            'base'      => add_query_arg( array( 'paged' => '%#%', 'status' => $status ) ),
-                            'format'    => '',
-                            'prev_text' => __('« Önceki'),
-                            'next_text' => __('Sonraki »'),
-                            'total'     => $total_pages,
-                            'current'   => $paged
-                        ) );
+                        $page_args = array( 'paged' => '%#%' );
+                        if ( '' !== $status ) {
+                            $page_args['status'] = $status;
+                        }
+                        echo wp_kses_post(
+                            paginate_links( array(
+                                'base'      => add_query_arg( $page_args ),
+                                'format'    => '',
+                                'prev_text' => esc_html__( '« Önceki', 'gnn-smtpmail' ),
+                                'next_text' => esc_html__( 'Sonraki »', 'gnn-smtpmail' ),
+                                'total'     => $total_pages,
+                                'current'   => $paged,
+                            ) )
+                        );
                         ?>
                     </div>
                 </div>

@@ -29,7 +29,7 @@ jobs:
           if [ -n "$VERSION_INPUT" ]; then
             VERSION="$VERSION_INPUT"
           else
-            VERSION=$(grep -m 1 "Version:" gnn-smtpmail/gnn-smtpmail.php | awk '{print $NF}')
+            VERSION=$(grep -m 1 "Version:" gnn-smtpmail/gnn-smtpmail.php | awk '{print $NF}' | tr -d '\r')
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT

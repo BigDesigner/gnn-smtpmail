@@ -66,10 +66,10 @@ class GNN_SMTPMail {
 
         // Scheduled log rotation
         add_action( 'gnn_smtpmail_daily_cleanup', array( 'GNN_SMTPMail_Logger', 'prune_old_logs' ) );
-        add_action( 'init', array( $this, 'ensure_cron_scheduled' ) );
 
         // Admin UI
         if ( is_admin() ) {
+            add_action( 'init', array( $this, 'ensure_cron_scheduled' ) );
             require_once GNN_SMTPMAIL_DIR . 'includes/class-gnn-smtpmail-admin.php';
             new GNN_SMTPMail_Admin();
         }
@@ -105,7 +105,7 @@ class GNN_SMTPMail {
         if ( ! headers_sent() ) {
             header( 'X-Content-Type-Options: nosniff' );
             header( 'X-Frame-Options: sameorigin' );
-            header( 'Referrer-Policy: no-referrer-when-downgrade' );
+            header( 'Referrer-Policy: strict-origin-when-cross-origin' );
         }
     }
 
@@ -180,7 +180,8 @@ class GNN_SMTPMail {
         $phpmailer->isSMTP();
         $phpmailer->Host       = sanitize_text_field( $c['host'] );
         $phpmailer->SMTPAuth   = ! empty( $c['auth'] );
-        $phpmailer->Port       = intval( $c['port'] );
+        $port                  = intval( $c['port'] );
+        $phpmailer->Port       = ( $port >= 1 && $port <= 65535 ) ? $port : 587;
         $secure = isset( $c['smtp_secure'] ) ? $c['smtp_secure'] : 'tls';
         if ( $secure === 'ssl' || $secure === 'tls' ) {
             $phpmailer->SMTPSecure = $secure;
@@ -191,7 +192,7 @@ class GNN_SMTPMail {
             $phpmailer->Username = (string) ( $c['username'] ?? '' );
             $phpmailer->Password = $this->get_smtp_password( $c );
         }
-        $phpmailer->SMTPAutoTLS = true;
+        $phpmailer->SMTPAutoTLS = ( $secure !== 'none' );
     }
 
     /**
@@ -342,15 +343,22 @@ class GNN_SMTPMail {
         if ( ! empty( $attachments ) ) {
             $brevo_attachments = array();
             $upload_dir = wp_upload_dir();
-            $allowed_roots = array_filter( array(
-                realpath( ABSPATH ),
-                defined( 'WP_CONTENT_DIR' ) ? realpath( WP_CONTENT_DIR ) : false,
-                ! empty( $upload_dir['basedir'] ) ? realpath( $upload_dir['basedir'] ) : false,
-            ) );
+            $allowed_roots = apply_filters(
+                'gnn_smtpmail_allowed_attachment_roots',
+                array_filter( array(
+                    defined( 'WP_CONTENT_DIR' ) ? realpath( WP_CONTENT_DIR ) : false,
+                    ! empty( $upload_dir['basedir'] ) ? realpath( $upload_dir['basedir'] ) : false,
+                ) )
+            );
 
             foreach ( $attachments as $attachment ) {
                 $real_path = realpath( $attachment );
                 if ( false !== $real_path && file_exists( $real_path ) && is_file( $real_path ) ) {
+                    $base_name = strtolower( basename( $real_path ) );
+                    $ext       = strtolower( pathinfo( $real_path, PATHINFO_EXTENSION ) );
+                    if ( 'php' === $ext || 'phtml' === $ext || 'wp-config.php' === $base_name ) {
+                        continue;
+                    }
                     $norm_path = wp_normalize_path( $real_path );
                     $is_allowed = false;
                     foreach ( $allowed_roots as $root ) {
