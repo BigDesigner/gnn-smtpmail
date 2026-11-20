@@ -7,7 +7,25 @@ This document logs active and historical bugs in the GNN SMTPMail repository.
 
 ## Resolved Bugs
 
-### 1. Unescaped Table Names in Logger Queries (v1.5.2)
+### 1. Updater `zipball_url` Fallback Rejected by Host Allowlist (v1.6.1)
+- **Status:** Resolved
+- **Confidence:** Verified
+- **Issue:** `GNN_SMTPMail_Updater::get_remote_release()` fell back to `$body->zipball_url` (`api.github.com`) when no `.zip` asset existed, which was rejected by the HTTPS host allowlist.
+- **Resolution:** Added `api.github.com` and `release-assets.githubusercontent.com` to the allowlist, plus `$args->slug` and `WP_Filesystem()` guards.
+
+### 2. Log Pruning Timezone Mismatch (v1.6.1)
+- **Status:** Resolved
+- **Confidence:** Verified
+- **Issue:** `prune_old_logs()` calculated cutoff timestamps with `gmdate()` (UTC) while logs were stored using `current_time( 'mysql' )` (site timezone).
+- **Resolution:** Replaced `gmdate()` with `wp_date()` for timezone-consistent retention pruning.
+
+### 3. `SMTPAutoTLS` Forced On When Encryption Set to `none` (v1.6.1)
+- **Status:** Resolved
+- **Confidence:** Verified
+- **Issue:** `$phpmailer->SMTPAutoTLS = true` remained active even when `smtp_secure` was set to `none`, breaking local/self-signed SMTP servers.
+- **Resolution:** Set `$phpmailer->SMTPAutoTLS = ( $secure !== 'none' )` and clamped ports to `1–65535`.
+
+### 4. Unescaped Table Names in Logger Queries (v1.5.2)
 - **Status:** Resolved
 - **Confidence:** Verified
 - **Issue:** SQL query structures like `CREATE TABLE`, `TRUNCATE TABLE`, and `DROP TABLE` inserted raw table strings without `esc_sql()` and backticks, posing SQL injection risks.

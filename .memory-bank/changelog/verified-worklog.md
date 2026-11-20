@@ -31,6 +31,18 @@ This document tracks all completed modifications, releases, and validation resul
 
 ## 🚀 Recent Releases
 
+### v1.6.1 — Security, Updater, WCAG & WP 7.1.5 Hardening (2026-11-20)
+- Removed plaintext SMTP password / Brevo API key echoing from HTML `value` attributes; added preserve-on-empty and explicit clear checkboxes.
+- Restricted Brevo attachment validation to `WP_CONTENT_DIR` and `wp_upload_dir()` with `.php`/`.phtml`/`wp-config.php` blocking.
+- Added `api.github.com` and `release-assets.githubusercontent.com` to Updater HTTPS allowlist, plus `$args->slug` and `WP_Filesystem()` guards.
+- Fixed `prune_old_logs()` timezone mismatch (`wp_date()`), `SMTPAutoTLS` for `none` encryption, port `1–65535` clamping, and `Referrer-Policy` header.
+- Populated `languages/gnn-smtpmail.pot` (90 strings), moved inline styles to `assets/admin.css`, fixed WCAG markup, and updated `Tested up to: 7.1.5`.
+
+### v1.6.0 — Bulletproof Hardening & WP 7.1.4 Compatibility (2026-11-18)
+- Eliminated per-request `SHOW TABLES` query and global `upgrade.php` loading; added lazy DB version check.
+- Added Brevo API v3 `Cc:` and `Bcc:` parsing, daily WP-Cron log pruning, and `wp-config.php` constant overrides.
+- Fixed GitHub Updater error transient caching, `init` (priority 1) textdomain loading, Vanilla JS migration, and multisite uninstall.
+
 ### v1.5.2 — Full Security Audit Hardening (2026-07-06)
 - Escaped logger queries table names with `esc_sql()` and backticks.
 - Path traversal verification for email attachments.
