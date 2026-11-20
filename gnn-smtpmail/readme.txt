@@ -1,28 +1,39 @@
 === GNN SMTPMail ===
 Contributors: BigDesigner
 Requires at least: 6.2
-Tested up to: 7.1.4
+Tested up to: 7.1.5
 Requires PHP: 7.4
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-YALNIZCA Custom SMTP ile WordPress e-postalarını güvenle gönderin. Test mail ve ayrıntılı loglama içerir. Kaldırınca tüm veriler temizlenir.
+Custom SMTP veya Brevo API ile WordPress e-postalarını güvenle gönderin. Test mail ve ayrıntılı loglama içerir. Kaldırınca tüm veriler temizlenir.
 
 == Özellikler ==
-* Custom SMTP (sunucu/port/ssl-tls/auth).
+* Custom SMTP (sunucu/port/ssl-tls/auth) ve Brevo API v3 gönderim kanalları.
 * Test mail gönderme ekranı.
-* Başarılı/başarısız gönderimler için log tablosu (DB).
-* Güvenlik: nonce, yetki kontrolü, sanitize/escape, prepared statements.
+* Başarılı/başarısız gönderimler için log tablosu (DB) ve otomatik günlük temizlik.
+* Güvenlik: nonce, yetki kontrolü, sanitize/escape, prepared statements, wp-config.php sabit desteği.
 * Uninstall sırasında tüm ayar ve tablo silinir.
-* 1.1.0 sürümünde Brevo tamamen kaldırıldı.
 
 == Kurulum ==
 1. `gnn-smtpmail` klasörünü `wp-content/plugins/` içine yükleyin.
 2. Eklentiyi etkinleştirin.
-3. Yönetim panelinde **GNN SMTPMail → Custom SMTP** bölümünden ayarlarınızı yapın.
+3. Yönetim panelinde **GNN SMTPMail → Ayarlar** bölümünden ayarlarınızı yapın.
 
 == Değişiklikler ==
+= 1.6.1 =
+* Güvenlik, Updater, WCAG & WP 7.1.5 uyumluluk iyileştirmeleri:
+  * SMTP şifresi ve Brevo API anahtarının HTML DOM `value` niteliğine düz metin yazılması kaldırıldı; boş bırakıldığında mevcut gizli değer korunur, isteğe bağlı temizleme kutusu eklendi.
+  * Brevo ek dosya (attachment) doğrulamasından `ABSPATH` kökü çıkarılarak `WP_CONTENT_DIR` / `uploads` ile sınırlandırıldı ve `.php` / `wp-config.php` dosyaları engellendi.
+  * Updater `zipball_url` fallback ve GitHub CDN desteği için `api.github.com` ve `release-assets.githubusercontent.com` host izin listesine eklendi; `$args->slug` ve `$wp_filesystem` kontrolleri güçlendirildi.
+  * `prune_old_logs()` saat dilimi uyuşmazlığı `wp_date()` ile düzeltildi; cron kontrolü yalnızca admin bağlamına alındı.
+  * `admin_hardening_headers()` içinde `Referrer-Policy` çekirdek ile uyumlu `strict-origin-when-cross-origin` olarak güncellendi.
+  * `smtp_secure = none` durumunda `SMTPAutoTLS` devre dışı bırakıldı ve port aralığı `1-65535` ile sınırlandırıldı.
+  * `paginate_links()` `wp_kses_post()` ile sarıldı, eksik text domain'ler ve tanı mesajı çevirileri tamamlandı, `languages/gnn-smtpmail.pot` dolduruldu.
+  * Geçersiz HTML iç içe `<p>` yapısı, başlık hiyerarşisi (`h2`), satır içi stiller ve `release.yml` CRLF sürüm ayrıştırması düzeltildi.
+  * `Tested up to` değeri WordPress `7.1.5` olarak güncellendi.
+
 = 1.6.0 =
 * Kurşun geçirmezlik & WP 7.1.4 uyumluluk güncellemesi:
   * Her sayfa isteğinde çalışan `SHOW TABLES` sorgusu ve global `upgrade.php` yüklemesi kaldırıldı (lazy DB kontrolü).

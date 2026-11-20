@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.1] - 2026-11-20
+
+### Security
+- Removed plaintext echoing of stored SMTP password and Brevo API key into HTML `value` attributes; empty submissions preserve existing secrets, with optional explicit clear checkboxes.
+- Restricted Brevo attachment path validation to `WP_CONTENT_DIR` and `wp_upload_dir()` (removing `ABSPATH` root) and explicitly blocked `.php`, `.phtml`, and `wp-config.php` files.
+- Updated `Referrer-Policy` header in `admin_hardening_headers()` from `no-referrer-when-downgrade` to `strict-origin-when-cross-origin` to avoid downgrading WordPress core policy.
+- Added explicit `sanitize_email()` / `sanitize_text_field()` sanitization for parsed Brevo sender fields and wrapped `paginate_links()` output with `wp_kses_post()`.
+
+### Fixed
+- Added `api.github.com` and `release-assets.githubusercontent.com` to Updater HTTPS host allowlist so `zipball_url` fallback and GitHub release asset CDN redirects succeed; added `$args->slug` and `$wp_filesystem` guards.
+- Fixed timezone mismatch in `GNN_SMTPMail_Logger::prune_old_logs()` by using `wp_date()` consistently with `current_time( 'mysql' )`.
+- Disabled `SMTPAutoTLS` when `smtp_secure` is `none` and clamped SMTP port values to `1-65535`.
+- Fixed invalid nested `<p>` HTML markup in `page_test()`, heading hierarchy (`h2`) in `page_custom()`, and CRLF stripping in `.github/workflows/release.yml`.
+
+### Changed
+- Scoped `ensure_cron_scheduled()` to `is_admin()` to eliminate unnecessary frontend `init` checks.
+- Moved inline admin styles to `assets/admin.css`, expanded `:focus-visible` coverage, localized all diagnostic/pagination strings, and populated `languages/gnn-smtpmail.pot`.
+- Updated `Tested up to` metadata to WordPress `7.1.5` and refreshed `readme.txt` feature summary.
+
 ## [1.6.0] - 2026-11-18
 
 ### Added
