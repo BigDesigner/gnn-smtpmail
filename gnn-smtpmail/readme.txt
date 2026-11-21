@@ -3,7 +3,7 @@ Contributors: BigDesigner
 Requires at least: 6.2
 Tested up to: 7.1.5
 Requires PHP: 7.4
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ Custom SMTP veya Brevo API ile WordPress e-postalarını güvenle gönderin. Tes
 3. Yönetim panelinde **GNN SMTPMail → Ayarlar** bölümünden ayarlarınızı yapın.
 
 == Değişiklikler ==
+= 1.6.2 =
+* GitHub güncelleme modülü (`inc/updater.php`) birleşik GNN Updater standardına geçirildi.
+
 = 1.6.1 =
 * Güvenlik, Updater, WCAG & WP 7.1.5 uyumluluk iyileştirmeleri:
   * SMTP şifresi ve Brevo API anahtarının HTML DOM `value` niteliğine düz metin yazılması kaldırıldı; boş bırakıldığında mevcut gizli değer korunur, isteğe bağlı temizleme kutusu eklendi.

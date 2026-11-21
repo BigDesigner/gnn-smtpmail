@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.2] - 2026-11-21
+
+### Changed
+- Unified `inc/updater.php` to the shared GNN GitHub Updater standard.
+
 ## [1.6.1] - 2026-11-20
 
 ### Security
