@@ -254,6 +254,107 @@ class GNN_SMTPMail_Admin {
     }
 
     /**
+     * Fetch and validate Brevo verified senders using transient caching.
+     *
+     * @param string $api_key Brevo API key.
+     * @return array{valid:bool,senders:array,active_senders:array,error:string}
+     */
+    private function get_brevo_senders_status( $api_key ) {
+        if ( empty( $api_key ) ) {
+            return array(
+                'valid'          => false,
+                'senders'        => array(),
+                'active_senders' => array(),
+                'error'          => '',
+            );
+        }
+
+        $cache_key = $this->get_brevo_cache_key( $api_key );
+        $cached    = get_transient( $cache_key );
+
+        if ( is_array( $cached ) && isset( $cached['__error'] ) ) {
+            return array(
+                'valid'          => false,
+                'senders'        => array(),
+                'active_senders' => array(),
+                'error'          => (string) $cached['__error'],
+            );
+        }
+
+        if ( false === $cached || ! is_array( $cached ) ) {
+            $response = wp_remote_get( 'https://api.brevo.com/v3/senders', array(
+                'headers' => array(
+                    'api-key' => $api_key,
+                    'Accept'  => 'application/json',
+                ),
+                'timeout' => 8,
+            ) );
+
+            if ( is_wp_error( $response ) ) {
+                $err = __( 'Brevo API bağlantı hatası: ', 'gnn-smtpmail' ) . $response->get_error_message();
+                set_transient( $cache_key, array( '__error' => $err ), MINUTE_IN_SECONDS );
+                return array(
+                    'valid'          => false,
+                    'senders'        => array(),
+                    'active_senders' => array(),
+                    'error'          => $err,
+                );
+            }
+
+            $code    = wp_remote_retrieve_response_code( $response );
+            $body    = wp_remote_retrieve_body( $response );
+            $decoded = json_decode( $body, true );
+
+            if ( 200 === $code && is_array( $decoded ) && isset( $decoded['senders'] ) && is_array( $decoded['senders'] ) ) {
+                $senders = $decoded['senders'];
+                set_transient( $cache_key, $senders, HOUR_IN_SECONDS );
+            } else {
+                $msg = ( is_array( $decoded ) && isset( $decoded['message'] ) ) ? $decoded['message'] : __( 'Bilinmeyen hata', 'gnn-smtpmail' );
+                $err = sprintf( __( 'Brevo API Hatası (HTTP %d): %s', 'gnn-smtpmail' ), $code, $msg );
+                set_transient( $cache_key, array( '__error' => $err ), MINUTE_IN_SECONDS );
+                return array(
+                    'valid'          => false,
+                    'senders'        => array(),
+                    'active_senders' => array(),
+                    'error'          => $err,
+                );
+            }
+        } else {
+            $senders = $cached;
+        }
+
+        $active_senders = array_values(
+            array_filter(
+                $senders,
+                function ( $sender ) {
+                    return is_array( $sender ) && ! empty( $sender['active'] );
+                }
+            )
+        );
+
+        return array(
+            'valid'          => true,
+            'senders'        => $senders,
+            'active_senders' => $active_senders,
+            'error'          => '',
+        );
+    }
+
+    /**
+     * Determine whether a wp_mail() source path belongs to an external override.
+     *
+     * @param string $file Relative file path from get_wp_mail_source().
+     * @return bool
+     */
+    private function is_wp_mail_conflict( $file ) {
+        if ( empty( $file ) ) {
+            return false;
+        }
+        $core_pluggable = ( defined( 'WPINC' ) ? WPINC : 'wp-includes' ) . '/pluggable.php';
+        return false === strpos( $file, $core_pluggable );
+    }
+
+    /**
      * Render top tab navigation across plugin admin pages.
      *
      * @param string $active_slug Active page slug.
@@ -312,16 +413,38 @@ class GNN_SMTPMail_Admin {
         $mailer_type  = isset( $s['mailer_type'] ) ? $s['mailer_type'] : 'custom';
         $stats        = GNN_SMTPMail_Logger::get_stats();
         $wp_mail_src  = $this->get_wp_mail_source();
-        $has_conflict = ! empty( $wp_mail_src ) && strpos( $wp_mail_src, 'wp-includes/pluggable.php' ) === false;
+        $has_conflict = $this->is_wp_mail_conflict( $wp_mail_src );
         $update_url   = wp_nonce_url( admin_url( 'plugins.php?gnn_smtpmail_check_update=1' ), 'gnn_smtpmail_manual_update' );
+        $brevo_error  = '';
 
         if ( 'brevo' === $mailer_type ) {
-            $brevo_key      = ( defined( 'GNN_SMTPMAIL_BREVO_KEY' ) && is_string( GNN_SMTPMAIL_BREVO_KEY ) ) ? GNN_SMTPMAIL_BREVO_KEY : ( $s['brevo']['api_key'] ?? '' );
-            $channel_label  = __( 'Brevo API', 'gnn-smtpmail' );
-            $channel_active = ! empty( $brevo_key );
+            $brevo_key     = ( defined( 'GNN_SMTPMAIL_BREVO_KEY' ) && is_string( GNN_SMTPMAIL_BREVO_KEY ) ) ? GNN_SMTPMAIL_BREVO_KEY : ( $s['brevo']['api_key'] ?? '' );
+            $channel_label = __( 'Brevo API', 'gnn-smtpmail' );
+            if ( empty( $brevo_key ) ) {
+                $status_class = 'error';
+                $status_label = __( 'Devre Dışı', 'gnn-smtpmail' );
+            } else {
+                $brevo_status = $this->get_brevo_senders_status( $brevo_key );
+                if ( ! $brevo_status['valid'] ) {
+                    $status_class = 'error';
+                    $status_label = __( 'API Hatası', 'gnn-smtpmail' );
+                    $brevo_error  = $brevo_status['error'];
+                } elseif ( empty( $brevo_status['active_senders'] ) ) {
+                    $status_class = 'error';
+                    $status_label = __( 'Doğrulanmış Gönderici Yok', 'gnn-smtpmail' );
+                } elseif ( empty( $s['brevo']['from_email'] ) || ! is_email( $s['brevo']['from_email'] ) ) {
+                    $status_class = 'warning';
+                    $status_label = __( 'Gönderici Seçilmedi', 'gnn-smtpmail' );
+                } else {
+                    $status_class = 'success';
+                    $status_label = __( 'Aktif', 'gnn-smtpmail' );
+                }
+            }
         } else {
             $channel_label  = __( 'Custom SMTP', 'gnn-smtpmail' );
             $channel_active = ! empty( $s['custom']['enabled'] );
+            $status_class   = $channel_active ? 'success' : 'error';
+            $status_label   = $channel_active ? __( 'Aktif', 'gnn-smtpmail' ) : __( 'Devre Dışı', 'gnn-smtpmail' );
         }
         ?>
         <div class="wrap gnn-wrap">
@@ -331,8 +454,8 @@ class GNN_SMTPMail_Admin {
             <div class="gnn-card">
                 <div class="gnn-card-header">
                     <h2><?php esc_html_e( 'Sistem Durumu Özeti', 'gnn-smtpmail' ); ?></h2>
-                    <span class="gnn-badge <?php echo $channel_active ? 'success' : 'error'; ?>">
-                        <?php echo esc_html( $channel_active ? __( 'Aktif', 'gnn-smtpmail' ) : __( 'Devre Dışı', 'gnn-smtpmail' ) ); ?>
+                    <span class="gnn-badge <?php echo esc_attr( $status_class ); ?>">
+                        <?php echo esc_html( $status_label ); ?>
                     </span>
                 </div>
                 <div class="gnn-card-body-padded">
@@ -365,6 +488,9 @@ class GNN_SMTPMail_Admin {
                             &middot; <strong><?php esc_html_e( 'Son Kayıt:', 'gnn-smtpmail' ); ?></strong> <?php echo esc_html( $stats['last_logged_at'] ); ?>
                         <?php endif; ?>
                     </p>
+                    <?php if ( ! empty( $brevo_error ) ) : ?>
+                        <p class="gnn-overview-meta gnn-text-error"><?php echo esc_html( $brevo_error ); ?></p>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -521,42 +647,9 @@ class GNN_SMTPMail_Admin {
                         <h2><?php esc_html_e('Brevo API Ayarları', 'gnn-smtpmail'); ?></h2>
                     </div>
                     <?php
-                    $senders = array();
-                    $api_error = '';
-                    if ( ! empty( $active_brevo_key ) ) {
-                        $cache_key = $this->get_brevo_cache_key( $active_brevo_key );
-                        $senders = get_transient( $cache_key );
-                        if ( false === $senders ) {
-                            $response = wp_remote_get( 'https://api.brevo.com/v3/senders', array(
-                                'headers' => array(
-                                    'api-key' => $active_brevo_key,
-                                    'Accept'  => 'application/json',
-                                ),
-                                'timeout' => 10,
-                            ) );
-                            if ( is_wp_error( $response ) ) {
-                                $api_error = __( 'Brevo API bağlantı hatası: ', 'gnn-smtpmail' ) . $response->get_error_message();
-                                $senders = array();
-                            } else {
-                                $code = wp_remote_retrieve_response_code( $response );
-                                $body = wp_remote_retrieve_body( $response );
-                                if ( $code === 200 ) {
-                                    $decoded = json_decode( $body, true );
-                                    if ( isset( $decoded['senders'] ) && is_array( $decoded['senders'] ) ) {
-                                        $senders = $decoded['senders'];
-                                        set_transient( $cache_key, $senders, HOUR_IN_SECONDS );
-                                    } else {
-                                        $senders = array();
-                                    }
-                                } else {
-                                    $decoded = json_decode( $body, true );
-                                    $msg = isset( $decoded['message'] ) ? $decoded['message'] : __( 'Bilinmeyen hata', 'gnn-smtpmail' );
-                                    $api_error = sprintf( __( 'Brevo API Hatası (HTTP %d): %s', 'gnn-smtpmail' ), $code, $msg );
-                                    $senders = array();
-                                }
-                            }
-                        }
-                    }
+                    $brevo_status = $this->get_brevo_senders_status( $active_brevo_key );
+                    $senders      = $brevo_status['active_senders'];
+                    $api_error    = $brevo_status['error'];
                     ?>
                     <div class="gnn-card-body">
                         <div class="gnn-form-row">
@@ -586,6 +679,10 @@ class GNN_SMTPMail_Admin {
                                     <p class="description gnn-text-error"><?php echo esc_html( $api_error ); ?></p>
                                     <?php wp_nonce_field( 'gnn_refresh_brevo_action', 'gnn_refresh_brevo_nonce' ); ?>
                                     <p class="gnn-form-spaced"><button type="submit" name="gnn_refresh_brevo_senders" value="1" class="button"><?php esc_html_e( 'Göndericileri Yenile', 'gnn-smtpmail' ); ?></button></p>
+                                <?php elseif ( empty( $senders ) ) : ?>
+                                    <p class="description gnn-text-error"><?php esc_html_e( 'Brevo hesabınızda doğrulanmış (aktif) gönderici bulunamadı. Brevo panelinden bir gönderici doğrulayıp yenileyin.', 'gnn-smtpmail' ); ?></p>
+                                    <?php wp_nonce_field( 'gnn_refresh_brevo_action', 'gnn_refresh_brevo_nonce' ); ?>
+                                    <p class="gnn-form-spaced"><button type="submit" name="gnn_refresh_brevo_senders" value="1" class="button"><?php esc_html_e( 'Göndericileri Yenile', 'gnn-smtpmail' ); ?></button></p>
                                 <?php else : ?>
                                     <div class="gnn-inline">
                                         <select id="gnn_brevo_sender_select" name="brevo_sender_select">
@@ -593,9 +690,6 @@ class GNN_SMTPMail_Admin {
                                             <?php
                                             $current_sender = ($b['from_name'] ?? '') . '|' . ($b['from_email'] ?? '');
                                             foreach ( $senders as $sender ) {
-                                                if ( empty($sender['active']) ) {
-                                                    continue;
-                                                }
                                                 $val = $sender['name'] . '|' . $sender['email'];
                                                 $label = $sender['name'] . ' (' . $sender['email'] . ')';
                                                 ?>
@@ -630,23 +724,40 @@ class GNN_SMTPMail_Admin {
         }
         $s = $this->settings();
         $mailer_type = isset($s['mailer_type']) ? $s['mailer_type'] : 'custom';
-        $active = false;
-        
+        $notice_type = '';
+        $notice_text = '';
+
         if ( $mailer_type === 'brevo' ) {
             $brevo_key = ( defined( 'GNN_SMTPMAIL_BREVO_KEY' ) && is_string( GNN_SMTPMAIL_BREVO_KEY ) ) ? GNN_SMTPMAIL_BREVO_KEY : ( $s['brevo']['api_key'] ?? '' );
-            $active = ! empty( $brevo_key );
-            $channel_name = 'BREVO API';
+            if ( empty( $brevo_key ) ) {
+                $notice_type = 'warning';
+                $notice_text = sprintf( __( '%s şu an devre dışı veya yapılandırılmamış.', 'gnn-smtpmail' ), 'BREVO API' );
+            } else {
+                $brevo_status = $this->get_brevo_senders_status( $brevo_key );
+                if ( ! $brevo_status['valid'] ) {
+                    $notice_type = 'error';
+                    $notice_text = $brevo_status['error'];
+                } elseif ( empty( $brevo_status['active_senders'] ) ) {
+                    $notice_type = 'warning';
+                    $notice_text = __( 'Brevo hesabınızda doğrulanmış (aktif) gönderici bulunamadı.', 'gnn-smtpmail' );
+                } elseif ( empty( $s['brevo']['from_email'] ) || ! is_email( $s['brevo']['from_email'] ) ) {
+                    $notice_type = 'warning';
+                    $notice_text = __( 'Brevo göndericisi seçilmemiş; varsayılan site e-postası (admin_email) kullanılacak.', 'gnn-smtpmail' );
+                }
+            }
         } else {
-            $active = ! empty( $s['custom']['enabled'] );
-            $channel_name = 'CUSTOM SMTP';
+            if ( empty( $s['custom']['enabled'] ) ) {
+                $notice_type = 'warning';
+                $notice_text = sprintf( __( '%s şu an devre dışı veya yapılandırılmamış.', 'gnn-smtpmail' ), 'CUSTOM SMTP' );
+            }
         }
         ?>
         <div class="wrap gnn-wrap">
             <h1><?php esc_html_e('E-posta Testi', 'gnn-smtpmail'); ?></h1>
             <?php $this->render_tabs( 'gnn-smtpmail-test' ); ?>
             <?php settings_errors( 'gnn-smtpmail' ); ?>
-            <?php if ( ! $active ) : ?>
-                <div class="notice notice-warning inline"><p><?php echo sprintf( esc_html__('%s şu an devre dışı veya yapılandırılmamış.', 'gnn-smtpmail'), esc_html( $channel_name ) ); ?></p></div>
+            <?php if ( ! empty( $notice_text ) ) : ?>
+                <div class="notice notice-<?php echo esc_attr( $notice_type ); ?> inline"><p><?php echo esc_html( $notice_text ); ?></p></div>
             <?php endif; ?>
             <form method="post">
                 <?php wp_nonce_field( 'gnn_test_send_action', 'gnn_test_nonce' ); ?>
@@ -726,7 +837,7 @@ class GNN_SMTPMail_Admin {
 
                 $wp_mail_defined_in = $this->get_wp_mail_source();
 
-                $has_conflict = strpos( $wp_mail_defined_in, 'wp-includes/pluggable.php' ) === false;
+                $has_conflict = $this->is_wp_mail_conflict( $wp_mail_defined_in );
                 $last_insert_error = get_option( 'gnn_smtpmail_last_insert_error', '' );
                 $last_db_error = $wpdb->last_error;
 
@@ -866,9 +977,7 @@ class GNN_SMTPMail_Admin {
         }
 
         $file = $this->get_wp_mail_source();
-        if ( empty( $file ) ) { return; }
-            
-        if ( strpos( $file, 'wp-includes/pluggable.php' ) === false ) {
+        if ( $this->is_wp_mail_conflict( $file ) ) {
             echo '<div class="notice notice-error is-dismissible">';
             echo '<p><strong>' . esc_html__( 'GNN SMTPMail Çakışma Uyarısı:', 'gnn-smtpmail' ) . '</strong><br>';
             echo sprintf(

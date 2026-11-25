@@ -227,6 +227,10 @@ class GNN_SMTPMail {
     }
 
     public function pre_wp_mail_handler( $null, $atts ) {
+        if ( null !== $null ) {
+            return $null;
+        }
+
         $s = $this->get_settings();
         $mailer_type = isset( $s['mailer_type'] ) ? $s['mailer_type'] : 'custom';
         if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
@@ -299,6 +303,8 @@ class GNN_SMTPMail {
                 } elseif ( strcasecmp( $name, 'Content-Type' ) === 0 ) {
                     if ( strpos( strtolower( $value ), 'text/html' ) !== false ) {
                         $content_type = 'text/html';
+                    } elseif ( strpos( strtolower( $value ), 'text/plain' ) !== false ) {
+                        $content_type = 'text/plain';
                     }
                 } else {
                     $custom_headers[$name] = $value;
@@ -340,6 +346,7 @@ class GNN_SMTPMail {
         }
 
         // Attachments
+        $skipped_attachments = array();
         if ( ! empty( $attachments ) ) {
             $brevo_attachments = array();
             $upload_dir = wp_upload_dir();
@@ -353,30 +360,34 @@ class GNN_SMTPMail {
 
             foreach ( $attachments as $attachment ) {
                 $real_path = realpath( $attachment );
+                $attached  = false;
                 if ( false !== $real_path && file_exists( $real_path ) && is_file( $real_path ) ) {
                     $base_name = strtolower( basename( $real_path ) );
                     $ext       = strtolower( pathinfo( $real_path, PATHINFO_EXTENSION ) );
-                    if ( 'php' === $ext || 'phtml' === $ext || 'wp-config.php' === $base_name ) {
-                        continue;
-                    }
-                    $norm_path = wp_normalize_path( $real_path );
-                    $is_allowed = false;
-                    foreach ( $allowed_roots as $root ) {
-                        $norm_root = trailingslashit( wp_normalize_path( $root ) );
-                        if ( 0 === stripos( $norm_path, $norm_root ) ) {
-                            $is_allowed = true;
-                            break;
+                    if ( 'php' !== $ext && 'phtml' !== $ext && 'wp-config.php' !== $base_name ) {
+                        $norm_path = wp_normalize_path( $real_path );
+                        $is_allowed = false;
+                        foreach ( $allowed_roots as $root ) {
+                            $norm_root = trailingslashit( wp_normalize_path( $root ) );
+                            if ( 0 === stripos( $norm_path, $norm_root ) ) {
+                                $is_allowed = true;
+                                break;
+                            }
+                        }
+                        if ( $is_allowed ) {
+                            $file_content = file_get_contents( $real_path );
+                            if ( false !== $file_content ) {
+                                $brevo_attachments[] = array(
+                                    'content' => base64_encode( $file_content ),
+                                    'name'    => basename( $real_path ),
+                                );
+                                $attached = true;
+                            }
                         }
                     }
-                    if ( $is_allowed ) {
-                        $file_content = file_get_contents( $real_path );
-                        if ( false !== $file_content ) {
-                            $brevo_attachments[] = array(
-                                'content' => base64_encode( $file_content ),
-                                'name'    => basename( $real_path ),
-                            );
-                        }
-                    }
+                }
+                if ( ! $attached ) {
+                    $skipped_attachments[] = basename( (string) $attachment );
                 }
             }
             if ( ! empty( $brevo_attachments ) ) {
@@ -405,17 +416,20 @@ class GNN_SMTPMail {
             return false;
         }
 
-        $code = wp_remote_retrieve_response_code( $response );
+        $code          = wp_remote_retrieve_response_code( $response );
         $response_body = wp_remote_retrieve_body( $response );
+        $decoded       = json_decode( $response_body, true );
         if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
             error_log( 'GNN SMTPMail - Brevo response code: ' . $code );
         }
 
-        if ( $code !== 201 ) {
-            $decoded = json_decode( $response_body, true );
-            $msg = isset( $decoded['message'] ) ? $decoded['message'] : __( 'Brevo API error', 'gnn-smtpmail' );
+        $has_message_id = is_array( $decoded ) && ( ! empty( $decoded['messageId'] ) || ! empty( $decoded['messageIds'] ) );
+        if ( ! in_array( $code, array( 201, 202 ), true ) || ! $has_message_id ) {
+            $msg = ( is_array( $decoded ) && isset( $decoded['message'] ) )
+                ? $decoded['message']
+                : __( 'Brevo API error', 'gnn-smtpmail' );
             if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                error_log( 'GNN SMTPMail - Brevo non-201 response body: ' . $response_body );
+                error_log( 'GNN SMTPMail - Brevo non-success response body: ' . $response_body );
             }
             $error = new WP_Error( 'brevo_api_failed', sprintf( __( 'Brevo API Error (HTTP %d): %s', 'gnn-smtpmail' ), $code, $msg ) );
             GNN_SMTPMail_Logger::insert( 'brevo', $to, $subject, 'error', $error->get_error_message() );
@@ -424,10 +438,18 @@ class GNN_SMTPMail {
         }
 
         // Succeeded
+        $message_id = ! empty( $decoded['messageId'] )
+            ? (string) $decoded['messageId']
+            : implode( ',', array_map( 'strval', (array) $decoded['messageIds'] ) );
+        $log_message = 'Message ID: ' . $message_id;
+        if ( ! empty( $skipped_attachments ) ) {
+            $log_message .= ' | ' . sprintf( __( 'Atlanan ekler: %s', 'gnn-smtpmail' ), implode( ', ', $skipped_attachments ) );
+        }
+
         if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
             error_log( 'GNN SMTPMail - Brevo API successful send. Inserting success log.' );
         }
-        GNN_SMTPMail_Logger::insert( 'brevo', $to, $subject, 'success', 'OK' );
+        GNN_SMTPMail_Logger::insert( 'brevo', $to, $subject, 'success', $log_message );
 
         $mail_data = array(
             'to'          => $to,

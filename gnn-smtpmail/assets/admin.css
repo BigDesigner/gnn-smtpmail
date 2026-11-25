@@ -291,6 +291,12 @@
   color: var(--wp--preset--color--vivid-red, #b32d2e);
 }
 
+.gnn-badge.warning {
+  background: rgba(219, 166, 23, 0.14);
+  border-color: rgba(219, 166, 23, 0.45);
+  color: inherit;
+}
+
 .gnn-tab:focus-visible,
 .gnn-grid a:focus-visible,
 .gnn-inline button:focus-visible,
