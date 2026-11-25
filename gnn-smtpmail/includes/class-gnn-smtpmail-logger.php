@@ -101,6 +101,79 @@ class GNN_SMTPMail_Logger {
     }
 
     /**
+     * Get aggregate counts and latest timestamp from the log table.
+     *
+     * @return array
+     */
+    public static function get_stats() {
+        global $wpdb;
+        $raw_table  = self::table_name();
+        $show_table = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $raw_table ) );
+        if ( empty( $show_table ) || strcasecmp( $show_table, $raw_table ) !== 0 ) {
+            return array(
+                'total'          => 0,
+                'success'        => 0,
+                'error'          => 0,
+                'last_logged_at' => '',
+            );
+        }
+
+        $table = esc_sql( $raw_table );
+        $row   = $wpdb->get_row(
+            "SELECT COUNT(*) AS total,
+                SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success_count,
+                SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count,
+                MAX(logged_at) AS last_logged_at
+             FROM `{$table}`"
+        );
+
+        if ( ! $row ) {
+            return array(
+                'total'          => 0,
+                'success'        => 0,
+                'error'          => 0,
+                'last_logged_at' => '',
+            );
+        }
+
+        return array(
+            'total'          => intval( $row->total ),
+            'success'        => intval( $row->success_count ),
+            'error'          => intval( $row->error_count ),
+            'last_logged_at' => (string) $row->last_logged_at,
+        );
+    }
+
+    /**
+     * Fetch logs for CSV/JSON export.
+     *
+     * @param string $status Optional status filter ('success'|'error'|'').
+     * @param int    $limit  Maximum number of rows to export.
+     * @return array
+     */
+    public static function get_logs_for_export( $status = '', $limit = 5000 ) {
+        global $wpdb;
+        $table = esc_sql( self::table_name() );
+        $limit = max( 1, min( 10000, intval( $limit ) ) );
+
+        if ( in_array( $status, array( 'success', 'error' ), true ) ) {
+            $query = $wpdb->prepare(
+                "SELECT id, logged_at, channel, recipient, subject, status, message FROM `{$table}` WHERE status = %s ORDER BY id DESC LIMIT %d",
+                $status,
+                $limit
+            );
+        } else {
+            $query = $wpdb->prepare(
+                "SELECT id, logged_at, channel, recipient, subject, status, message FROM `{$table}` ORDER BY id DESC LIMIT %d",
+                $limit
+            );
+        }
+
+        $rows = $wpdb->get_results( $query, ARRAY_A );
+        return is_array( $rows ) ? $rows : array();
+    }
+
+    /**
      * Prune log entries older than the configured retention period.
      */
     public static function prune_old_logs() {

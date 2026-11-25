@@ -1,20 +1,318 @@
-/* Admin styles */
-.gnn-grid { display: flex; flex-wrap: wrap; gap: 0.625rem; margin-top: 0.625rem; }
+/* Admin styles — GNN SMTPMail */
+.gnn-wrap {
+  max-width: 68rem;
+}
+
+.gnn-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.25);
+  margin: 1rem 0 1.5rem;
+  padding: 0;
+}
+
+.gnn-tab {
+  display: inline-block;
+  padding: 0.625rem 0.125rem;
+  text-decoration: none;
+  color: inherit;
+  opacity: 0.75;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.gnn-tab:hover,
+.gnn-tab:focus-visible {
+  opacity: 1;
+  color: var(--wp-admin-theme-color, #2271b1);
+}
+
+.gnn-tab.is-active {
+  opacity: 1;
+  font-weight: 600;
+  color: var(--wp-admin-theme-color, #2271b1);
+  border-bottom-color: var(--wp-admin-theme-color, #2271b1);
+}
+
+.gnn-card {
+  background: var(--wp--preset--color--base, #fff);
+  border: 1px solid rgba(128, 128, 128, 0.25);
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  margin-bottom: 1.25rem;
+}
+
+.gnn-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.18);
+}
+
+.gnn-card-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.gnn-card-body {
+  padding: 0 1.5rem;
+}
+
+.gnn-card-body-padded {
+  padding: 1.25rem 1.5rem;
+}
+
+.gnn-card-footer {
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid rgba(128, 128, 128, 0.18);
+}
+
+.gnn-card-footer .tablenav {
+  margin: 0;
+  height: auto;
+}
+
+.gnn-card-table {
+  border: 0;
+  box-shadow: none;
+  margin: 0;
+}
+
+.gnn-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+  align-items: flex-start;
+}
+
+.gnn-card-body > .gnn-form-row:last-child,
+.gnn-card-body > #gnn_test_custom_fields > .gnn-form-row:last-child {
+  border-bottom: 0;
+}
+
+.gnn-form-label {
+  flex: 0 0 13.5rem;
+  padding-top: 0.375rem;
+  font-weight: 500;
+}
+
+.gnn-form-label label {
+  font-weight: 500;
+}
+
+.gnn-form-control {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+
+.gnn-form-control input[type="text"],
+.gnn-form-control input[type="email"],
+.gnn-form-control input[type="password"],
+.gnn-form-control input[type="number"],
+.gnn-form-control select,
+.gnn-form-control textarea {
+  width: 100%;
+  max-width: 28rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+.gnn-form-control textarea {
+  max-width: 36rem;
+}
+
+.gnn-form-control .description {
+  margin: 0.5rem 0 0;
+  opacity: 0.75;
+}
+
+.gnn-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Accessible pill toggle switch in normal document flow */
+.gnn-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.gnn-switch-input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.gnn-switch-track {
+  display: inline-flex;
+  align-items: center;
+  width: 2.5rem;
+  height: 1.375rem;
+  padding: 0.125rem;
+  border-radius: 999px;
+  background: rgba(128, 128, 128, 0.35);
+  box-sizing: border-box;
+  transition: background-color 0.18s ease;
+}
+
+.gnn-switch-track::before {
+  content: "";
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  background: var(--wp--preset--color--base, #fff);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.18s ease;
+}
+
+.gnn-switch-input:checked + .gnn-switch-track {
+  background: var(--wp-admin-theme-color, #2271b1);
+}
+
+.gnn-switch-input:checked + .gnn-switch-track::before {
+  transform: translateX(1.125rem);
+}
+
+.gnn-switch-input:focus-visible + .gnn-switch-track {
+  outline: 2px solid var(--wp-admin-theme-color, #2271b1);
+  outline-offset: 2px;
+}
+
+.gnn-switch-state {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  opacity: 0.75;
+}
+
+.gnn-switch-input:checked ~ .gnn-switch-state {
+  opacity: 1;
+}
+
+.gnn-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.75rem;
+}
+
+.gnn-stat-card {
+  padding: 0.875rem 1rem;
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.gnn-stat-label {
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+.gnn-stat-value {
+  font-size: 1.125rem;
+  line-height: 1.3;
+}
+
+.gnn-overview-meta {
+  margin: 1rem 0 0;
+  opacity: 0.85;
+}
+
+.gnn-logs-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.gnn-actions {
+  margin-top: 1.25rem;
+}
+
+.gnn-actions .button-primary {
+  padding: 0.375rem 1.25rem;
+  height: auto;
+  font-weight: 500;
+}
+
+.gnn-grid { display: flex; flex-wrap: wrap; gap: 0.625rem; margin-top: 0.75rem; }
 .gnn-inline { display: flex; flex-wrap: wrap; gap: 0.625rem; align-items: center; }
 .gnn-table-responsive { overflow-x: auto; max-width: 100%; }
 .gnn-notice-spaced { margin-top: 0.625rem; }
 .gnn-form-spaced { margin-top: 0.625rem; }
 .gnn-table-spaced { margin-top: 0.9375rem; }
-.gnn-clear-secret { display: inline-block; margin-top: 0.375rem; }
+.gnn-clear-secret { display: inline-block; margin-top: 0.5rem; }
 .gnn-text-error { color: var(--wp--preset--color--vivid-red, #d63638); }
 .gnn-text-success { color: var(--wp--preset--color--vivid-green-cyan, #00a32a); }
 .gnn-text-bold { font-weight: 600; }
-.gnn-badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-weight: 600; }
-.gnn-badge.success { background: #e6ffed; border: 1px solid #a5d6a7; color: #1b5e20; }
-.gnn-badge.error { background: #ffe6e6; border: 1px solid #ef9a9a; color: #b71c1c; }
+
+.gnn-badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-weight: 600;
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  background: rgba(128, 128, 128, 0.08);
+}
+
+.gnn-badge.success {
+  background: rgba(0, 163, 42, 0.12);
+  border-color: rgba(0, 163, 42, 0.4);
+  color: var(--wp--preset--color--vivid-green-cyan, #007017);
+}
+
+.gnn-badge.error {
+  background: rgba(214, 54, 56, 0.12);
+  border-color: rgba(214, 54, 56, 0.4);
+  color: var(--wp--preset--color--vivid-red, #b32d2e);
+}
+
+.gnn-tab:focus-visible,
 .gnn-grid a:focus-visible,
 .gnn-inline button:focus-visible,
 .gnn-inline select:focus-visible,
-.gnn-settings-section input:focus-visible,
-.gnn-settings-section select:focus-visible,
-.gnn-settings-section textarea:focus-visible { outline: 2px solid var(--wp-admin-theme-color, #2271b1); outline-offset: 2px; }
+.gnn-presets button:focus-visible,
+.gnn-card input:focus-visible,
+.gnn-card select:focus-visible,
+.gnn-card textarea:focus-visible {
+  outline: 2px solid var(--wp-admin-theme-color, #2271b1);
+  outline-offset: 2px;
+}
+
+@media (max-width: 48rem) {
+  .gnn-form-label {
+    flex: 1 1 100%;
+    padding-top: 0;
+  }
+  .gnn-card-header,
+  .gnn-card-body,
+  .gnn-card-body-padded,
+  .gnn-card-footer {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
