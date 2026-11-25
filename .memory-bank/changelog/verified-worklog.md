@@ -31,6 +31,15 @@ This document tracks all completed modifications, releases, and validation resul
 
 ## 🚀 Recent Releases
 
+### v1.6.3 — Modern Card UI, SMTP Presets & Log Export (2026-11-25)
+- Unified all 4 admin screens (`Genel Bakış`, `Ayarlar`, `E-posta Testi`, `Loglar`) with tabbed navigation, card row layouts, and flow-safe `role="switch"` toggles.
+- Added `Genel Bakış` System Status summary (`GNN_SMTPMail_Logger::get_stats()`), one-click SMTP provider presets, dynamic auth fields, and Brevo sender refresh button.
+- Added `HTML` / `Özel E-posta` toggles on `E-posta Testi` and CSV/JSON log export (`FEAT-EXPORT`) with CSV formula-injection protection and clear confirmation.
+- Preserved Brevo sender metadata when saving Custom SMTP settings and updated `languages/gnn-smtpmail.pot` (120 strings).
+
+### v1.6.2 — Unified GNN Updater Standard (2026-11-21)
+- Unified `inc/updater.php` to the shared GNN GitHub Updater standard with API + HTML/HEAD web fallback and SSRF allowlist.
+
 ### v1.6.1 — Security, Updater, WCAG & WP 7.1.5 Hardening (2026-11-20)
 - Removed plaintext SMTP password / Brevo API key echoing from HTML `value` attributes; added preserve-on-empty and explicit clear checkboxes.
 - Restricted Brevo attachment validation to `WP_CONTENT_DIR` and `wp_upload_dir()` with `.php`/`.phtml`/`wp-config.php` blocking.

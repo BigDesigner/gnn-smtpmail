@@ -4,9 +4,9 @@
   "status": "active",
   "mode": "Interactive",
   "preferred_language": "Turkish",
-  "timestamp": "2026-11-20T04:09:33+03:00",
+  "timestamp": "2026-11-25T03:35:21+03:00",
   "active_branch": "main",
-  "last_commit": "651fd48",
+  "last_commit": "5ced8bb",
   "git_history_available": true,
   "worktree_status": "clean",
   "concurrency_lock": {
@@ -15,12 +15,12 @@
     "lock_acquired_at": null
   },
   "current_sprint": {
-    "sprint_id": "v1.6.1-audit-hardening",
+    "sprint_id": "v1.6.3-ui-export",
     "active_tasks": [
-      "TASK-AUD-01",
-      "TASK-AUD-02",
-      "TASK-AUD-03",
-      "TASK-AUD-04"
+      "FEAT-EXPORT",
+      "TASK-UI-01",
+      "TASK-UI-02",
+      "TASK-UI-03"
     ]
   },
   "tracked_memory_areas": {

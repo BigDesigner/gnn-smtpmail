@@ -32,6 +32,14 @@ This document manages active milestones, releases, and upcoming backlog items.
 
 ## 🚀 Recent Releases
 
+### v1.6.3 — Modern Card UI, SMTP Presets & Log Export (2026-11-25)
+- Added top tab navigation, `.gnn-card` / `.gnn-form-row` layout, and accessible `role="switch"` toggles (`AÇIK`/`KAPALI`) across all admin pages.
+- Added Overview stats summary, one-click SMTP provider presets, dynamic auth toggling, Brevo sender refresh button, and `HTML`/`Özel E-posta` test switches.
+- Implemented CSV/JSON log export (`FEAT-EXPORT`) with CSV formula-injection mitigation and confirmation prompt on log clearing; updated `.pot` (120 strings).
+
+### v1.6.2 — Unified GNN Updater Standard (2026-11-21)
+- Unified `inc/updater.php` to the shared GNN GitHub Updater standard.
+
 ### v1.6.1 — Security, Updater, WCAG & WP 7.1.5 Hardening (2026-11-20)
 - Masked stored SMTP password / Brevo API key in admin HTML inputs with preserve-on-empty and explicit clear checkboxes.
 - Restricted Brevo attachment validation to `WP_CONTENT_DIR` / `uploads` and blocked `.php`/`.phtml`/`wp-config.php`.
@@ -65,7 +73,13 @@ This document manages active milestones, releases, and upcoming backlog items.
 
 ---
 
-## 🏃 Active Sprint Tasks (v1.6.1-audit-hardening)
+## 🏃 Active Sprint Tasks (v1.6.3-ui-export)
+- [x] **TASK-UI-01 (Tabbed Card UI & Switches):** Implement unified tab bar, `.gnn-card` rows, flow-safe CSS switches, and `Genel Bakış` stats card.
+- [x] **TASK-UI-02 (SMTP Presets & Brevo UX):** Add SMTP provider presets, conditional auth fields, Brevo sender refresh, and preserve Brevo sender on Custom SMTP saves.
+- [x] **TASK-UI-03 (Test Mail Toggles & i18n):** Add `HTML` / `Özel E-posta` toggles and extract 120 strings into `languages/gnn-smtpmail.pot`.
+- [x] **FEAT-EXPORT:** Implement CSV/JSON log export mechanism with formula-injection protection and clear confirmation.
+
+### Completed Sprint (v1.6.1-audit-hardening)
 - [x] **TASK-AUD-01 (Secrets & Attachments):** Remove plaintext secrets from DOM inputs and restrict Brevo attachment roots to `WP_CONTENT_DIR` / `uploads`.
 - [x] **TASK-AUD-02 (Updater & CI):** Allow `api.github.com` / `release-assets.githubusercontent.com` in Updater, add `$args->slug` / `WP_Filesystem()` guards, and add CRLF strip in `release.yml`.
 - [x] **TASK-AUD-03 (Timezone, SMTP & Headers):** Fix `prune_old_logs()` timezone (`wp_date()`), `SMTPAutoTLS` for `none`, port `1–65535`, and `Referrer-Policy`.
@@ -83,5 +97,4 @@ This document manages active milestones, releases, and upcoming backlog items.
 ---
 
 ## 📂 Backlog
-- [ ] **FEAT-EXPORT:** Implement CSV/JSON log export mechanism.
 - [ ] **UI-GLOW:** Implement GNN Premium glassmorphism design system to the admin settings page.
