@@ -275,11 +275,12 @@ class GNN_SMTPMail {
             $from_name = get_option( 'blogname' );
         }
 
-        // Parse headers
-        $content_type = apply_filters( 'wp_mail_content_type', 'text/plain' );
-        $reply_to = '';
-        $cc_emails = array();
-        $bcc_emails = array();
+        // Parse headers (aligned with official Brevo plugin behavior)
+        $content_type   = apply_filters( 'wp_mail_content_type', 'text/plain' );
+        $reply_to       = '';
+        $cc_emails      = array();
+        $bcc_emails     = array();
+        $tags           = array();
         $custom_headers = array();
         if ( ! empty( $headers ) ) {
             $headers_arr = is_array( $headers ) ? $headers : explode( "\n", str_replace( "\r", '', $headers ) );
@@ -290,7 +291,19 @@ class GNN_SMTPMail {
                 list( $name, $value ) = explode( ':', $header, 2 );
                 $name  = trim( $name );
                 $value = trim( $value );
-                if ( strcasecmp( $name, 'Reply-To' ) === 0 ) {
+                if ( strcasecmp( $name, 'From' ) === 0 ) {
+                    if ( strpos( $value, '<' ) !== false ) {
+                        $parsed_name  = trim( trim( substr( $value, 0, strpos( $value, '<' ) ) ), " \t\n\r\0\x0B\"'" );
+                        $parsed_email = trim( str_replace( '>', '', substr( $value, strpos( $value, '<' ) + 1 ) ) );
+                        if ( is_email( $parsed_email ) ) {
+                            $from_email = $parsed_email;
+                            $from_name  = $parsed_name;
+                        }
+                    } elseif ( is_email( $value ) ) {
+                        $from_email = $value;
+                        $from_name  = '';
+                    }
+                } elseif ( strcasecmp( $name, 'Reply-To' ) === 0 ) {
                     if ( preg_match( '/<([^>]+)>/', $value, $matches ) ) {
                         $reply_to = trim( $matches[1] );
                     } else {
@@ -306,18 +319,24 @@ class GNN_SMTPMail {
                     } elseif ( strpos( strtolower( $value ), 'text/plain' ) !== false ) {
                         $content_type = 'text/plain';
                     }
+                } elseif ( strcasecmp( $name, 'X-Mailin-Tag' ) === 0 ) {
+                    if ( '' !== $value ) {
+                        $tags[] = $value;
+                    }
+                    $custom_headers[ $name ] = $value;
                 } else {
-                    $custom_headers[$name] = $value;
+                    $custom_headers[ $name ] = $value;
                 }
             }
         }
 
         // Prepare JSON body
+        $sender = array( 'email' => $from_email );
+        if ( '' !== trim( (string) $from_name ) ) {
+            $sender['name'] = $from_name;
+        }
         $body = array(
-            'sender' => array(
-                'name'  => $from_name,
-                'email' => $from_email,
-            ),
+            'sender'  => $sender,
             'to'      => $to_emails,
             'subject' => $subject,
         );
@@ -330,15 +349,26 @@ class GNN_SMTPMail {
         }
 
         if ( $content_type === 'text/html' ) {
-            $body['htmlContent'] = $message;
-            $body['textContent'] = wp_strip_all_tags( $message );
+            $html_body = (string) $message;
+            if ( strpos( $html_body, '</table>' ) === false && strpos( $html_body, '</div>' ) === false && strpos( $html_body, "\n" ) !== false ) {
+                $html_body = preg_replace( '#<(https?://[^*]+)>#', '$1', $html_body );
+                $html_body = nl2br( $html_body );
+            }
+            $body['htmlContent'] = $html_body;
+            $body['textContent'] = wp_strip_all_tags( (string) $message );
         } else {
-            $body['textContent'] = $message;
-            $body['htmlContent'] = wpautop( esc_html( $message ) );
+            $plain_body = (string) $message;
+            $body['textContent'] = $plain_body;
+            $clean_for_html      = preg_replace( '#<(https?://[^*]+)>#', '$1', $plain_body );
+            $body['htmlContent'] = nl2br( esc_html( $clean_for_html ) );
         }
 
         if ( ! empty( $reply_to ) && is_email( $reply_to ) ) {
             $body['replyTo'] = array( 'email' => $reply_to );
+        }
+
+        if ( ! empty( $tags ) ) {
+            $body['tags'] = array_values( array_unique( $tags ) );
         }
 
         if ( ! empty( $custom_headers ) ) {
@@ -395,6 +425,13 @@ class GNN_SMTPMail {
             }
         }
 
+        // Strip empty top-level fields (matching official Brevo API client)
+        foreach ( $body as $key => $val ) {
+            if ( empty( $val ) && false !== $val && 0 !== $val ) {
+                unset( $body[ $key ] );
+            }
+        }
+
         // Send API Request
         $api_url = 'https://api.brevo.com/v3/smtp/email';
         $response = wp_remote_post( $api_url, array(
@@ -402,6 +439,7 @@ class GNN_SMTPMail {
                 'api-key'      => $api_key,
                 'Content-Type' => 'application/json',
                 'Accept'       => 'application/json',
+                'User-Agent'   => 'gnn-smtpmail/wordpress',
             ),
             'body'    => wp_json_encode( $body ),
             'timeout' => 15,
@@ -441,6 +479,8 @@ class GNN_SMTPMail {
         $message_id = ! empty( $decoded['messageId'] )
             ? (string) $decoded['messageId']
             : implode( ',', array_map( 'strval', (array) $decoded['messageIds'] ) );
+        // Strip angle brackets so sanitize_textarea_field() in the logger does not remove the ID as an HTML tag.
+        $message_id  = str_replace( array( '<', '>' ), '', $message_id );
         $log_message = 'Message ID: ' . $message_id;
         if ( ! empty( $skipped_attachments ) ) {
             $log_message .= ' | ' . sprintf( __( 'Atlanan ekler: %s', 'gnn-smtpmail' ), implode( ', ', $skipped_attachments ) );

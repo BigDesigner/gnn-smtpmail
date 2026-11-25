@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.5] - 2026-11-25
+
+### Added
+- Brevo `/v3/account` status check (`get_brevo_account_status()`) displaying connected account email, remaining credits, and Transactional SMTP (`relay.enabled`) status/warnings on `Genel Bakış`, `Ayarlar`, and `E-posta Testi`.
+- Support for `From:` header override into `sender`, `X-Mailin-Tag` header mapping to `tags`, and `User-Agent` header matching the official Brevo plugin.
+
+### Fixed
+- Stripped `<` and `>` from Brevo `messageId` before logging so `sanitize_textarea_field()` in `GNN_SMTPMail_Logger::insert()` no longer erases the Message ID.
+- Cleaned `<https://...>` URLs and applied `nl2br()` for non-table/div email bodies, omitted empty `sender.name`, and stripped empty top-level payload keys before JSON encoding.
+
 ## [1.6.4] - 2026-11-25
 
 ### Fixed

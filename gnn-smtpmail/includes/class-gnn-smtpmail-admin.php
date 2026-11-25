@@ -93,6 +93,7 @@ class GNN_SMTPMail_Admin {
 
             if ( $brevo_api_key !== $existing_brevo_key && '' !== $existing_brevo_key ) {
                 delete_transient( $this->get_brevo_cache_key( $existing_brevo_key ) );
+                delete_transient( $this->get_brevo_account_cache_key( $existing_brevo_key ) );
             }
 
             if ( ! empty( $_POST['clear_brevo_api_key'] ) ) {
@@ -135,6 +136,7 @@ class GNN_SMTPMail_Admin {
             $active_brevo_key = $brevo_key_const ? GNN_SMTPMAIL_BREVO_KEY : ( $s['brevo']['api_key'] ?? '' );
             if ( ! empty( $active_brevo_key ) ) {
                 delete_transient( $this->get_brevo_cache_key( $active_brevo_key ) );
+                delete_transient( $this->get_brevo_account_cache_key( $active_brevo_key ) );
             }
             add_settings_error( 'gnn-smtpmail', 'brevo_refreshed', __( 'Brevo gönderici listesi yenilendi.', 'gnn-smtpmail' ), 'updated' );
         }
@@ -240,6 +242,16 @@ class GNN_SMTPMail_Admin {
     }
 
     /**
+     * Build transient cache key for Brevo account/relay status.
+     *
+     * @param string $api_key Brevo API key.
+     * @return string
+     */
+    private function get_brevo_account_cache_key( $api_key ) {
+        return 'gnn_smtpmail_brevo_account_' . substr( wp_hash( $api_key ), 0, 16 );
+    }
+
+    /**
      * Prevent CSV formula injection by prefixing cells starting with formula triggers.
      *
      * @param mixed $value Cell value.
@@ -341,6 +353,95 @@ class GNN_SMTPMail_Admin {
     }
 
     /**
+     * Fetch Brevo account and transactional SMTP relay status via /v3/account.
+     *
+     * @param string $api_key Brevo API key.
+     * @return array{valid:bool,email:string,relay_enabled:bool,credits:?int,error:string}
+     */
+    private function get_brevo_account_status( $api_key ) {
+        if ( empty( $api_key ) ) {
+            return array(
+                'valid'         => false,
+                'email'         => '',
+                'relay_enabled' => false,
+                'credits'       => null,
+                'error'         => '',
+            );
+        }
+
+        $cache_key = $this->get_brevo_account_cache_key( $api_key );
+        $cached    = get_transient( $cache_key );
+
+        if ( is_array( $cached ) && isset( $cached['__error'] ) ) {
+            return array(
+                'valid'         => false,
+                'email'         => '',
+                'relay_enabled' => false,
+                'credits'       => null,
+                'error'         => (string) $cached['__error'],
+            );
+        }
+
+        if ( false === $cached || ! is_array( $cached ) ) {
+            $response = wp_remote_get( 'https://api.brevo.com/v3/account', array(
+                'headers' => array(
+                    'api-key' => $api_key,
+                    'Accept'  => 'application/json',
+                ),
+                'timeout' => 8,
+            ) );
+
+            if ( is_wp_error( $response ) ) {
+                $err = __( 'Brevo API bağlantı hatası: ', 'gnn-smtpmail' ) . $response->get_error_message();
+                set_transient( $cache_key, array( '__error' => $err ), MINUTE_IN_SECONDS );
+                return array(
+                    'valid'         => false,
+                    'email'         => '',
+                    'relay_enabled' => false,
+                    'credits'       => null,
+                    'error'         => $err,
+                );
+            }
+
+            $code    = wp_remote_retrieve_response_code( $response );
+            $body    = wp_remote_retrieve_body( $response );
+            $decoded = json_decode( $body, true );
+
+            if ( 200 === $code && is_array( $decoded ) ) {
+                $credits = null;
+                if ( ! empty( $decoded['plan'] ) && is_array( $decoded['plan'] ) && isset( $decoded['plan'][0]['credits'] ) ) {
+                    $credits = intval( $decoded['plan'][0]['credits'] );
+                }
+                $cached = array(
+                    'email'         => isset( $decoded['email'] ) ? (string) $decoded['email'] : '',
+                    'relay_enabled' => ! empty( $decoded['relay']['enabled'] ),
+                    'credits'       => $credits,
+                );
+                set_transient( $cache_key, $cached, 15 * MINUTE_IN_SECONDS );
+            } else {
+                $msg = ( is_array( $decoded ) && isset( $decoded['message'] ) ) ? $decoded['message'] : __( 'Bilinmeyen hata', 'gnn-smtpmail' );
+                $err = sprintf( __( 'Brevo API Hatası (HTTP %d): %s', 'gnn-smtpmail' ), $code, $msg );
+                set_transient( $cache_key, array( '__error' => $err ), MINUTE_IN_SECONDS );
+                return array(
+                    'valid'         => false,
+                    'email'         => '',
+                    'relay_enabled' => false,
+                    'credits'       => null,
+                    'error'         => $err,
+                );
+            }
+        }
+
+        return array(
+            'valid'         => true,
+            'email'         => (string) ( $cached['email'] ?? '' ),
+            'relay_enabled' => ! empty( $cached['relay_enabled'] ),
+            'credits'       => isset( $cached['credits'] ) ? $cached['credits'] : null,
+            'error'         => '',
+        );
+    }
+
+    /**
      * Determine whether a wp_mail() source path belongs to an external override.
      *
      * @param string $file Relative file path from get_wp_mail_source().
@@ -424,11 +525,16 @@ class GNN_SMTPMail_Admin {
                 $status_class = 'error';
                 $status_label = __( 'Devre Dışı', 'gnn-smtpmail' );
             } else {
-                $brevo_status = $this->get_brevo_senders_status( $brevo_key );
+                $brevo_status  = $this->get_brevo_senders_status( $brevo_key );
+                $brevo_account = $this->get_brevo_account_status( $brevo_key );
                 if ( ! $brevo_status['valid'] ) {
                     $status_class = 'error';
                     $status_label = __( 'API Hatası', 'gnn-smtpmail' );
                     $brevo_error  = $brevo_status['error'];
+                } elseif ( $brevo_account['valid'] && ! $brevo_account['relay_enabled'] ) {
+                    $status_class = 'error';
+                    $status_label = __( 'Transactional SMTP Kapalı', 'gnn-smtpmail' );
+                    $brevo_error  = __( 'Brevo hesabınızda Transactional SMTP (Relay) devre dışı. Brevo panelinden SMTP aktivasyonu yapılmalıdır.', 'gnn-smtpmail' );
                 } elseif ( empty( $brevo_status['active_senders'] ) ) {
                     $status_class = 'error';
                     $status_label = __( 'Doğrulanmış Gönderici Yok', 'gnn-smtpmail' );
@@ -647,11 +753,31 @@ class GNN_SMTPMail_Admin {
                         <h2><?php esc_html_e('Brevo API Ayarları', 'gnn-smtpmail'); ?></h2>
                     </div>
                     <?php
-                    $brevo_status = $this->get_brevo_senders_status( $active_brevo_key );
-                    $senders      = $brevo_status['active_senders'];
-                    $api_error    = $brevo_status['error'];
+                    $brevo_status  = $this->get_brevo_senders_status( $active_brevo_key );
+                    $brevo_account = $this->get_brevo_account_status( $active_brevo_key );
+                    $senders       = $brevo_status['active_senders'];
+                    $api_error     = $brevo_status['error'];
                     ?>
                     <div class="gnn-card-body">
+                        <?php if ( ! empty( $active_brevo_key ) && $brevo_account['valid'] ) : ?>
+                        <div class="gnn-form-row">
+                            <div class="gnn-form-label"><?php esc_html_e('Brevo Hesap Durumu', 'gnn-smtpmail'); ?></div>
+                            <div class="gnn-form-control">
+                                <p>
+                                    <strong><?php esc_html_e('Hesap:', 'gnn-smtpmail'); ?></strong> <?php echo esc_html( $brevo_account['email'] ); ?>
+                                    &middot; <strong><?php esc_html_e('Transactional SMTP:', 'gnn-smtpmail'); ?></strong>
+                                    <?php if ( $brevo_account['relay_enabled'] ) : ?>
+                                        <span class="gnn-text-success"><?php esc_html_e('Aktif', 'gnn-smtpmail'); ?></span>
+                                    <?php else : ?>
+                                        <span class="gnn-text-error gnn-text-bold"><?php esc_html_e('Devre Dışı (Brevo panelinden SMTP aktivasyonu gerekli)', 'gnn-smtpmail'); ?></span>
+                                    <?php endif; ?>
+                                    <?php if ( null !== $brevo_account['credits'] ) : ?>
+                                        &middot; <strong><?php esc_html_e('Kalan Kredi:', 'gnn-smtpmail'); ?></strong> <?php echo esc_html( (string) $brevo_account['credits'] ); ?>
+                                    <?php endif; ?>
+                                </p>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                         <div class="gnn-form-row">
                             <div class="gnn-form-label"><label for="gnn_brevo_api_key"><?php esc_html_e('Brevo API Key', 'gnn-smtpmail'); ?></label></div>
                             <div class="gnn-form-control">
@@ -733,10 +859,17 @@ class GNN_SMTPMail_Admin {
                 $notice_type = 'warning';
                 $notice_text = sprintf( __( '%s şu an devre dışı veya yapılandırılmamış.', 'gnn-smtpmail' ), 'BREVO API' );
             } else {
-                $brevo_status = $this->get_brevo_senders_status( $brevo_key );
+                $brevo_status  = $this->get_brevo_senders_status( $brevo_key );
+                $brevo_account = $this->get_brevo_account_status( $brevo_key );
                 if ( ! $brevo_status['valid'] ) {
                     $notice_type = 'error';
                     $notice_text = $brevo_status['error'];
+                } elseif ( $brevo_account['valid'] && ! $brevo_account['relay_enabled'] ) {
+                    $notice_type = 'error';
+                    $notice_text = sprintf(
+                        __( 'Brevo (%s) hesabınızda Transactional SMTP (Relay) devre dışı. E-postalar gönderilmez ve Brevo loglarında görünmez.', 'gnn-smtpmail' ),
+                        $brevo_account['email']
+                    );
                 } elseif ( empty( $brevo_status['active_senders'] ) ) {
                     $notice_type = 'warning';
                     $notice_text = __( 'Brevo hesabınızda doğrulanmış (aktif) gönderici bulunamadı.', 'gnn-smtpmail' );
