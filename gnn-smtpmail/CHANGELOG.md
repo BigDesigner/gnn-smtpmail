@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.6] - 2026-11-25
+
+### Fixed
+- Updated `inc/updater.php` to read the local plugin version directly from disk via `get_local_version()` instead of relying on potentially stale WordPress update transients.
+
 ## [1.6.5] - 2026-11-25
 
 ### Added

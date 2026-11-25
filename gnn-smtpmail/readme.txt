@@ -3,7 +3,7 @@ Contributors: BigDesigner
 Requires at least: 6.2
 Tested up to: 7.1.5
 Requires PHP: 7.4
-Stable tag: 1.6.5
+Stable tag: 1.6.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,9 @@ Custom SMTP veya Brevo API ile WordPress e-postalarını güvenle gönderin. Tes
 3. Yönetim panelinde **GNN SMTPMail → Ayarlar** bölümünden ayarlarınızı yapın.
 
 == Değişiklikler ==
+= 1.6.6 =
+* Güncelleyici (`inc/updater.php`) yerel eklenti sürümünü artık önbellekli transient yerine doğrudan diskteki eklenti başlığından (`get_local_version()`) okuyarak güncelleme sonrası yanlış güncelleme bildirimi oluşmasını önler.
+
 = 1.6.5 =
 * Resmi Brevo eklentisi ile tam uyumlu gönderim ve hesap doğrulama:
   * `Message ID:` değerinin loglarda boş kalmasına neden olan `<...>` açılı parantez temizleme sorunu giderildi.
