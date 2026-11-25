@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.3] - 2026-11-25
+
+### Added
+- Modern tabbed card layout, row dividers, and accessible `role="switch"` toggle switches across all admin screens (`Genel Bakış`, `Ayarlar`, `E-posta Testi`, `Loglar`).
+- System Status Overview card on `Genel Bakış` displaying active mailer channel, total/success/error log counts (`GNN_SMTPMail_Logger::get_stats()`), `wp_mail()` conflict status, and manual update check shortcut.
+- One-click SMTP provider presets (`Gmail`, `Outlook / M365`, `Yandex`, `Zoho`, `Amazon SES`) and dynamic `SMTP Kimlik Doğrulama` field toggling.
+- Nonce-protected **Göndericileri Yenile** button to refresh the Brevo verified senders cache on demand.
+- `HTML` and `Özel E-posta` toggle switches on `E-posta Testi` supporting both predefined and custom test templates.
+- CSV and JSON log export (`GNN_SMTPMail_Logger::get_logs_for_export()`) with CSV formula-injection mitigation, UTF-8 BOM, and confirmation dialog on log clearing.
+
+### Fixed
+- Preserved previously selected Brevo sender metadata when saving Custom SMTP settings without the Brevo sender dropdown present in `$_POST`.
+- Replaced `position: fixed` switch input hiding in `assets/admin.css` with zero-conflict flow-safe `appearance: none` styling and direct-child row border selectors.
+- Updated `languages/gnn-smtpmail.pot` with all new admin UI strings.
+
 ## [1.6.2] - 2026-11-21
 
 ### Changed

@@ -3,16 +3,16 @@ Contributors: BigDesigner
 Requires at least: 6.2
 Tested up to: 7.1.5
 Requires PHP: 7.4
-Stable tag: 1.6.2
+Stable tag: 1.6.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Custom SMTP veya Brevo API ile WordPress e-postalarını güvenle gönderin. Test mail ve ayrıntılı loglama içerir. Kaldırınca tüm veriler temizlenir.
 
 == Özellikler ==
-* Custom SMTP (sunucu/port/ssl-tls/auth) ve Brevo API v3 gönderim kanalları.
-* Test mail gönderme ekranı.
-* Başarılı/başarısız gönderimler için log tablosu (DB) ve otomatik günlük temizlik.
+* Custom SMTP (sunucu/port/ssl-tls/auth, hazır sağlayıcı şablonları) ve Brevo API v3 gönderim kanalları.
+* HTML / Düz metin ve özel içerik seçenekli Test Mail ekranı.
+* Başarılı/başarısız gönderimler için log tablosu (DB), CSV/JSON dışa aktarma ve otomatik günlük temizlik.
 * Güvenlik: nonce, yetki kontrolü, sanitize/escape, prepared statements, wp-config.php sabit desteği.
 * Uninstall sırasında tüm ayar ve tablo silinir.
 
@@ -22,6 +22,16 @@ Custom SMTP veya Brevo API ile WordPress e-postalarını güvenle gönderin. Tes
 3. Yönetim panelinde **GNN SMTPMail → Ayarlar** bölümünden ayarlarınızı yapın.
 
 == Değişiklikler ==
+= 1.6.3 =
+* Modern Kart Arayüzü, Sağlayıcı Şablonları ve Log Dışa Aktarma güncellemesi:
+  * Tüm yönetim sayfalarına (Genel Bakış, Ayarlar, E-posta Testi, Loglar) üst sekme çubuğu, kart düzeni, satır ayırıcılar ve erişilebilir `AÇIK`/`KAPALI` toggle switch bileşenleri eklendi.
+  * Genel Bakış ekranına aktif kanal, toplam/başarılı/hatalı log sayıları, `wp_mail()` durumu ve Güncellemeleri Denetle özeti eklendi.
+  * Custom SMTP ayarlarına tek tıkla doldurulan hazır sağlayıcı şablonları (Gmail, Outlook/M365, Yandex, Zoho, Amazon SES) ve `SMTP Kimlik Doğrulama` kapalıyken kimlik alanlarını gizleme eklendi.
+  * Brevo API ekranına doğrulanmış gönderici önbelleğini anında yenileme butonu eklendi ve başka kanal kaydedildiğinde seçili Brevo göndericisinin silinmesi düzeltildi.
+  * E-posta Testi sayfasına `HTML` ve `Özel E-posta` toggle anahtarları eklendi.
+  * Loglar sayfasına formül enjeksiyonu korumalı CSV ve JSON dışa aktarma (`FEAT-EXPORT`) ile temizleme onay diyalogu eklendi.
+  * CSS `position: fixed` gizleme kaldırılarak sıfır çakışmalı akış içi erişilebilir stil uygulandı ve `languages/gnn-smtpmail.pot` güncellendi.
+
 = 1.6.2 =
 * GitHub güncelleme modülü (`inc/updater.php`) birleşik GNN Updater standardına geçirildi.
 
