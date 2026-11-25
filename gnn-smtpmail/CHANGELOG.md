@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.4] - 2026-11-25
+
+### Fixed
+- Eliminated Brevo API false-positive delivery reports by validating `messageId` / `messageIds` in JSON responses (`201`/`202`) and logging the returned `Message ID` instead of a static `'OK'`.
+- Respected upstream `pre_wp_mail` short-circuits (`null !== $null`) and explicit `Content-Type: text/plain` headers in `pre_wp_mail_handler()`.
+- Recorded skipped/unreadable/blocked attachment filenames in the Brevo log entry so dropped attachments are never silent.
+- Eliminated false-positive "Aktif" status badges and missing warnings on `Genel Bakış`, `Ayarlar`, and `E-posta Testi` by validating Brevo API `/v3/senders` responses and active verified sender availability via shared `get_brevo_senders_status()` helper (with 1-minute error caching).
+- Fixed false-positive `wp_mail()` conflict detection in `page_logs()` when `get_wp_mail_source()` returns an empty string by unifying all checks through `is_wp_mail_conflict()`.
+
 ## [1.6.3] - 2026-11-25
 
 ### Added

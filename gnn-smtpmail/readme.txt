@@ -3,7 +3,7 @@ Contributors: BigDesigner
 Requires at least: 6.2
 Tested up to: 7.1.5
 Requires PHP: 7.4
-Stable tag: 1.6.3
+Stable tag: 1.6.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,14 @@ Custom SMTP veya Brevo API ile WordPress e-postalarını güvenle gönderin. Tes
 3. Yönetim panelinde **GNN SMTPMail → Ayarlar** bölümünden ayarlarınızı yapın.
 
 == Değişiklikler ==
+= 1.6.4 =
+* Brevo API false-positive düzeltmeleri:
+  * `pre_wp_mail_handler()` artık başka bir eklenti tarafından kısa devre edilmiş (`null !== $null`) çağrıları ezip göndermiyor ve `Content-Type: text/plain` başlığını destekliyor.
+  * Brevo API yanıtında HTTP `201`/`202` ile birlikte geçerli JSON `messageId` / `messageIds` doğrulanıyor ve `Message ID:` değeri loga kaydediliyor.
+  * Ek dosya doğrulaması nedeniyle atlanan veya okunamayan ekler sessiz kalmak yerine başarı log mesajında belirtiliyor.
+  * Genel Bakış, Ayarlar ve E-posta Testi ekranlarında yalnızca anahtar varlığı yerine Brevo API yanıtı ve aktif/doğrulanmış gönderici durumu denetleniyor (false `Aktif` rozeti ve boş gönderici listesi uyarısızlığı giderildi).
+  * `page_logs()` içindeki `wp_mail()` çakışma kontrolü boş kaynak yolunda sahte uyarı vermeyecek şekilde düzeltildi.
+
 = 1.6.3 =
 * Modern Kart Arayüzü, Sağlayıcı Şablonları ve Log Dışa Aktarma güncellemesi:
   * Tüm yönetim sayfalarına (Genel Bakış, Ayarlar, E-posta Testi, Loglar) üst sekme çubuğu, kart düzeni, satır ayırıcılar ve erişilebilir `AÇIK`/`KAPALI` toggle switch bileşenleri eklendi.

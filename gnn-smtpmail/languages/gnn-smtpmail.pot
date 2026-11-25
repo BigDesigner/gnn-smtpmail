@@ -2,9 +2,9 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: GNN SMTPMail 1.6.3\n"
+"Project-Id-Version: GNN SMTPMail 1.6.4\n"
 "Report-Msgid-Bugs-To: https://github.com/BigDesigner/gnn-smtpmail/issues\n"
-"POT-Creation-Date: 2026-11-25 03:35+0300\n"
+"POT-Creation-Date: 2026-11-25 03:47+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,7 +38,7 @@ msgstr ""
 msgid "GNN SMTPMail"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:30 includes/class-gnn-smtpmail-admin.php:264 includes/class-gnn-smtpmail-admin.php:378
+#: includes/class-gnn-smtpmail-admin.php:30 includes/class-gnn-smtpmail-admin.php:365 includes/class-gnn-smtpmail-admin.php:504
 msgid "Ayarlar"
 msgstr ""
 
@@ -46,7 +46,7 @@ msgstr ""
 msgid "Test Mail"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:32 includes/class-gnn-smtpmail-admin.php:266 includes/class-gnn-smtpmail-admin.php:380
+#: includes/class-gnn-smtpmail-admin.php:32 includes/class-gnn-smtpmail-admin.php:367 includes/class-gnn-smtpmail-admin.php:506
 msgid "Loglar"
 msgstr ""
 
@@ -58,11 +58,11 @@ msgstr ""
 msgid "Brevo gönderici listesi yenilendi."
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:149 includes/class-gnn-smtpmail-admin.php:683
+#: includes/class-gnn-smtpmail-admin.php:149 includes/class-gnn-smtpmail-admin.php:794
 msgid "GNN SMTPMail Test"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:150 includes/class-gnn-smtpmail-admin.php:689
+#: includes/class-gnn-smtpmail-admin.php:150 includes/class-gnn-smtpmail-admin.php:800
 msgid "Bu bir test e-postasıdır. GNN SMTPMail üzerinden gönderilmiştir."
 msgstr ""
 
@@ -82,414 +82,442 @@ msgstr ""
 msgid "Loglar temizlendi."
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:263
-msgid "Genel Bakış"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:265 includes/class-gnn-smtpmail-admin.php:379 includes/class-gnn-smtpmail-admin.php:645
-msgid "E-posta Testi"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:268
-msgid "GNN SMTPMail Menüsü"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:285
-msgid "AÇIK"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:286
-msgid "KAPALI"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:309 includes/class-gnn-smtpmail-admin.php:391 includes/class-gnn-smtpmail-admin.php:629 includes/class-gnn-smtpmail-admin.php:705
-msgid "Bu sayfaya erişim yetkiniz yok."
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:320 includes/class-gnn-smtpmail-admin.php:417
-msgid "Brevo API"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:323 includes/class-gnn-smtpmail-admin.php:416
-msgid "Custom SMTP"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:328
-msgid "GNN SMTPMail (Custom SMTP & Brevo API)"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:333
-msgid "Sistem Durumu Özeti"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:335
-msgid "Aktif"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:335
-msgid "Devre Dışı"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:341
-msgid "Aktif Kanal"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:345
-msgid "Toplam Log"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:349 includes/class-gnn-smtpmail-admin.php:774 includes/class-gnn-smtpmail-admin.php:821
-msgid "Başarılı"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:353
-msgid "Hatalı"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:358 includes/class-gnn-smtpmail-admin.php:741
-msgid "wp_mail() Kaynağı:"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:362
-msgid "Çekirdek (Uyumlu)"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:365
-msgid "Son Kayıt:"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:373
-msgid "Hızlı Başlangıç"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:376
-msgid "Custom SMTP veya Brevo API ile tüm WordPress e-postalarınızı güvenli şekilde gönderin. Üstteki sekmelerden ayarlarınızı yapın, ardından E-posta Testi sayfasından doğrulayın ve Loglar sayfasından durumu takip edin."
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:381
-msgid "Güncellemeleri Denetle"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:402
-msgid "E-posta Gönderim Ayarları"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:409
-msgid "Gönderim Kanalı"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:413
-msgid "Gönderim Yöntemi"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:419
-msgid "WordPress e-postalarının hangi kanal üzerinden iletileceğini seçin."
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:427
-msgid "Custom SMTP Ayarları"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:431
-msgid "Custom SMTP'yi Etkinleştir"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:434
-msgid "WordPress varsayılan mail gönderimi yerine özel SMTP sunucusunu kullanmak için etkinleştirin."
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:438
-msgid "Hazır Sağlayıcı Şablonu"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:440
-msgid "SMTP sağlayıcı şablonları"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:447
-msgid "Seçtiğiniz sağlayıcının sunucu, port ve şifreleme ayarlarını otomatik doldurur."
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:451
-msgid "Sunucu"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:457
-msgid "Port"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:463
-msgid "Şifreleme"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:467
-msgid "Yok"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:474
-msgid "SMTP Kimlik Doğrulama"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:482
-msgid "Kullanıcı Adı"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:488
-msgid "Şifre"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:492
-msgid "wp-config.php içerisinde GNN_SMTPMAIL_SMTP_PASS sabiti ile tanımlandı."
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:497
-msgid "Mevcut şifre kayıtlıdır. Değiştirmek istemiyorsanız boş bırakın."
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:498
-msgid "Kayıtlı şifreyi temizle"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:505
-msgid "Gönderen E-posta"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:511
-msgid "Gönderen Adı"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:521
-msgid "Brevo API Ayarları"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:538
+#: includes/class-gnn-smtpmail-admin.php:294
 msgid "Brevo API bağlantı hatası: "
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:553
+#: includes/class-gnn-smtpmail-admin.php:312
 msgid "Bilinmeyen hata"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:554
+#: includes/class-gnn-smtpmail-admin.php:313
 msgid "Brevo API Hatası (HTTP %d): %s"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:563
-msgid "Brevo API Key"
+#: includes/class-gnn-smtpmail-admin.php:364
+msgid "Genel Bakış"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:567
-msgid "wp-config.php içerisinde GNN_SMTPMAIL_BREVO_KEY sabiti ile tanımlandı."
+#: includes/class-gnn-smtpmail-admin.php:366 includes/class-gnn-smtpmail-admin.php:505 includes/class-gnn-smtpmail-admin.php:756
+msgid "E-posta Testi"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:572
-msgid "Mevcut API anahtarı kayıtlıdır. Değiştirmek istemiyorsanız boş bırakın."
+#: includes/class-gnn-smtpmail-admin.php:369
+msgid "GNN SMTPMail Menüsü"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:386
+msgid "AÇIK"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:387
+msgid "KAPALI"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:410 includes/class-gnn-smtpmail-admin.php:517 includes/class-gnn-smtpmail-admin.php:723 includes/class-gnn-smtpmail-admin.php:816
+msgid "Bu sayfaya erişim yetkiniz yok."
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:422 includes/class-gnn-smtpmail-admin.php:543
+msgid "Brevo API"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:425 includes/class-gnn-smtpmail-admin.php:447
+msgid "Devre Dışı"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:430
+msgid "API Hatası"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:434
+msgid "Doğrulanmış Gönderici Yok"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:437
+msgid "Gönderici Seçilmedi"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:440 includes/class-gnn-smtpmail-admin.php:447
+msgid "Aktif"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:444 includes/class-gnn-smtpmail-admin.php:542
+msgid "Custom SMTP"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:451
+msgid "GNN SMTPMail (Custom SMTP & Brevo API)"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:456
+msgid "Sistem Durumu Özeti"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:464
+msgid "Aktif Kanal"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:468
+msgid "Toplam Log"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:472 includes/class-gnn-smtpmail-admin.php:885 includes/class-gnn-smtpmail-admin.php:932
+msgid "Başarılı"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:476
+msgid "Hatalı"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:481 includes/class-gnn-smtpmail-admin.php:852
+msgid "wp_mail() Kaynağı:"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:485
+msgid "Çekirdek (Uyumlu)"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:488
+msgid "Son Kayıt:"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:499
+msgid "Hızlı Başlangıç"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:502
+msgid "Custom SMTP veya Brevo API ile tüm WordPress e-postalarınızı güvenli şekilde gönderin. Üstteki sekmelerden ayarlarınızı yapın, ardından E-posta Testi sayfasından doğrulayın ve Loglar sayfasından durumu takip edin."
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:507
+msgid "Güncellemeleri Denetle"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:528
+msgid "E-posta Gönderim Ayarları"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:535
+msgid "Gönderim Kanalı"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:539
+msgid "Gönderim Yöntemi"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:545
+msgid "WordPress e-postalarının hangi kanal üzerinden iletileceğini seçin."
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:553
+msgid "Custom SMTP Ayarları"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:557
+msgid "Custom SMTP'yi Etkinleştir"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:560
+msgid "WordPress varsayılan mail gönderimi yerine özel SMTP sunucusunu kullanmak için etkinleştirin."
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:564
+msgid "Hazır Sağlayıcı Şablonu"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:566
+msgid "SMTP sağlayıcı şablonları"
 msgstr ""
 
 #: includes/class-gnn-smtpmail-admin.php:573
-msgid "Kayıtlı API anahtarını temizle"
+msgid "Seçtiğiniz sağlayıcının sunucu, port ve şifreleme ayarlarını otomatik doldurur."
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:575
-msgid "Brevo hesabınızdaki API Key değerini buraya girin ve kaydedin."
+#: includes/class-gnn-smtpmail-admin.php:577
+msgid "Sunucu"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:581
-msgid "Gönderici Seçin"
+#: includes/class-gnn-smtpmail-admin.php:583
+msgid "Port"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:584
-msgid "Gönderici seçmek için önce API anahtarınızı girip kaydedin."
+#: includes/class-gnn-smtpmail-admin.php:589
+msgid "Şifreleme"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:588 includes/class-gnn-smtpmail-admin.php:610
-msgid "Göndericileri Yenile"
+#: includes/class-gnn-smtpmail-admin.php:593
+msgid "Yok"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:592
-msgid "-- Seçin --"
+#: includes/class-gnn-smtpmail-admin.php:600
+msgid "SMTP Kimlik Doğrulama"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:612
-msgid "Gönderimlerin spam klasörüne düşmemesi için Brevo hesabınızda doğrulanmış bir alan adı/gönderici seçin."
+#: includes/class-gnn-smtpmail-admin.php:608
+msgid "Kullanıcı Adı"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:620
-msgid "Ayarları Kaydet"
+#: includes/class-gnn-smtpmail-admin.php:614
+msgid "Şifre"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:649
-msgid "%s şu an devre dışı veya yapılandırılmamış."
+#: includes/class-gnn-smtpmail-admin.php:618
+msgid "wp-config.php içerisinde GNN_SMTPMAIL_SMTP_PASS sabiti ile tanımlandı."
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:655
-msgid "Bir Test Gönderin"
+#: includes/class-gnn-smtpmail-admin.php:623
+msgid "Mevcut şifre kayıtlıdır. Değiştirmek istemiyorsanız boş bırakın."
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:659
-msgid "Şuna Gönder"
+#: includes/class-gnn-smtpmail-admin.php:624
+msgid "Kayıtlı şifreyi temizle"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:662
-msgid "Test e-postasını göndermek istediğiniz e-posta adresini girin."
+#: includes/class-gnn-smtpmail-admin.php:631
+msgid "Gönderen E-posta"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:637
+msgid "Gönderen Adı"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:647
+msgid "Brevo API Ayarları"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:656
+msgid "Brevo API Key"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:660
+msgid "wp-config.php içerisinde GNN_SMTPMAIL_BREVO_KEY sabiti ile tanımlandı."
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:665
+msgid "Mevcut API anahtarı kayıtlıdır. Değiştirmek istemiyorsanız boş bırakın."
 msgstr ""
 
 #: includes/class-gnn-smtpmail-admin.php:666
-msgid "HTML"
+msgid "Kayıtlı API anahtarını temizle"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:669
-msgid "Bu e-postayı HTML biçiminde göndermek için etkinleştirin. Düz metin biçiminde göndermek için devre dışı bırakın."
+#: includes/class-gnn-smtpmail-admin.php:668
+msgid "Brevo hesabınızdaki API Key değerini buraya girin ve kaydedin."
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:673
-msgid "Özel E-posta"
+#: includes/class-gnn-smtpmail-admin.php:674
+msgid "Gönderici Seçin"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:676
-msgid "Önceden tanımlanmış e-posta şablonunu kendi içeriğinizle değiştirin."
+#: includes/class-gnn-smtpmail-admin.php:677
+msgid "Gönderici seçmek için önce API anahtarınızı girip kaydedin."
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:681 includes/class-gnn-smtpmail-admin.php:809
-msgid "Konu"
+#: includes/class-gnn-smtpmail-admin.php:681 includes/class-gnn-smtpmail-admin.php:685 includes/class-gnn-smtpmail-admin.php:704
+msgid "Göndericileri Yenile"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:687 includes/class-gnn-smtpmail-admin.php:811
-msgid "Mesaj"
+#: includes/class-gnn-smtpmail-admin.php:683
+msgid "Brevo hesabınızda doğrulanmış (aktif) gönderici bulunamadı. Brevo panelinden bir gönderici doğrulayıp yenileyin."
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:696
-msgid "Test e-postası gönder"
+#: includes/class-gnn-smtpmail-admin.php:689
+msgid "-- Seçin --"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:718
-msgid "E-posta Logları"
+#: includes/class-gnn-smtpmail-admin.php:706
+msgid "Gönderimlerin spam klasörüne düşmemesi için Brevo hesabınızda doğrulanmış bir alan adı/gönderici seçin."
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:739
-msgid "Sistem Bilgisi:"
+#: includes/class-gnn-smtpmail-admin.php:714
+msgid "Ayarları Kaydet"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:739
-msgid "Log tablosu aktif. Toplam log satırı: %d"
+#: includes/class-gnn-smtpmail-admin.php:734 includes/class-gnn-smtpmail-admin.php:751
+msgid "%s şu an devre dışı veya yapılandırılmamış."
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:743
-msgid "wp-includes/pluggable.php (Çekirdek - Uyumlu)"
+#: includes/class-gnn-smtpmail-admin.php:742
+msgid "Brevo hesabınızda doğrulanmış (aktif) gönderici bulunamadı."
 msgstr ""
 
 #: includes/class-gnn-smtpmail-admin.php:745
-msgid "(Çakışma! Başka bir eklenti wp_mail() fonksiyonunu ele geçirmiş durumda. Bizim eklentimiz pasif kalacaktır.)"
+msgid "Brevo göndericisi seçilmemiş; varsayılan site e-postası (admin_email) kullanılacak."
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:749
-msgid "Son Log Kayıt Hatası:"
+#: includes/class-gnn-smtpmail-admin.php:766
+msgid "Bir Test Gönderin"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:752
-msgid "Son Veri Tabanı Hatası:"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:755
-msgid "Sistem Hatası:"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:755
-msgid "`%s` tablosu veri tabanında bulunamadı!"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:765
-msgid "Log Filtreleme ve İşlemler"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:771
-msgid "Durum:"
+#: includes/class-gnn-smtpmail-admin.php:770
+msgid "Şuna Gönder"
 msgstr ""
 
 #: includes/class-gnn-smtpmail-admin.php:773
-msgid "Hepsi"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:775 includes/class-gnn-smtpmail-admin.php:821
-msgid "Hata"
+msgid "Test e-postasını göndermek istediğiniz e-posta adresini girin."
 msgstr ""
 
 #: includes/class-gnn-smtpmail-admin.php:777
-msgid "Filtrele"
+msgid "HTML"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:780
+msgid "Bu e-postayı HTML biçiminde göndermek için etkinleştirin. Düz metin biçiminde göndermek için devre dışı bırakın."
 msgstr ""
 
 #: includes/class-gnn-smtpmail-admin.php:784
-msgid "CSV İndir"
+msgid "Özel E-posta"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:785
-msgid "JSON İndir"
+#: includes/class-gnn-smtpmail-admin.php:787
+msgid "Önceden tanımlanmış e-posta şablonunu kendi içeriğinizle değiştirin."
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:788
-msgid "Tüm e-posta loglarını kalıcı olarak silmek istediğinize emin misiniz?"
+#: includes/class-gnn-smtpmail-admin.php:792 includes/class-gnn-smtpmail-admin.php:920
+msgid "Konu"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:790
-msgid "Tüm Logları Temizle"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:799
-msgid "Gönderim Geçmişi"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:800
-msgid "Toplam: %d"
-msgstr ""
-
-#: includes/class-gnn-smtpmail-admin.php:806
-msgid "Tarih"
+#: includes/class-gnn-smtpmail-admin.php:798 includes/class-gnn-smtpmail-admin.php:922
+msgid "Mesaj"
 msgstr ""
 
 #: includes/class-gnn-smtpmail-admin.php:807
+msgid "Test e-postası gönder"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:829
+msgid "E-posta Logları"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:850
+msgid "Sistem Bilgisi:"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:850
+msgid "Log tablosu aktif. Toplam log satırı: %d"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:854
+msgid "wp-includes/pluggable.php (Çekirdek - Uyumlu)"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:856
+msgid "(Çakışma! Başka bir eklenti wp_mail() fonksiyonunu ele geçirmiş durumda. Bizim eklentimiz pasif kalacaktır.)"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:860
+msgid "Son Log Kayıt Hatası:"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:863
+msgid "Son Veri Tabanı Hatası:"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:866
+msgid "Sistem Hatası:"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:866
+msgid "`%s` tablosu veri tabanında bulunamadı!"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:876
+msgid "Log Filtreleme ve İşlemler"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:882
+msgid "Durum:"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:884
+msgid "Hepsi"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:886 includes/class-gnn-smtpmail-admin.php:932
+msgid "Hata"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:888
+msgid "Filtrele"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:895
+msgid "CSV İndir"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:896
+msgid "JSON İndir"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:899
+msgid "Tüm e-posta loglarını kalıcı olarak silmek istediğinize emin misiniz?"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:901
+msgid "Tüm Logları Temizle"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:910
+msgid "Gönderim Geçmişi"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:911
+msgid "Toplam: %d"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:917
+msgid "Tarih"
+msgstr ""
+
+#: includes/class-gnn-smtpmail-admin.php:918
 msgid "Kanal"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:808
+#: includes/class-gnn-smtpmail-admin.php:919
 msgid "Alıcı"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:810
+#: includes/class-gnn-smtpmail-admin.php:921
 msgid "Durum"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:825
+#: includes/class-gnn-smtpmail-admin.php:936
 msgid "Log bulunamadı."
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:844
+#: includes/class-gnn-smtpmail-admin.php:955
 msgid "« Önceki"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:845
+#: includes/class-gnn-smtpmail-admin.php:956
 msgid "Sonraki »"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:873
+#: includes/class-gnn-smtpmail-admin.php:982
 msgid "GNN SMTPMail Çakışma Uyarısı:"
 msgstr ""
 
-#: includes/class-gnn-smtpmail-admin.php:875
+#: includes/class-gnn-smtpmail-admin.php:984
 msgid "`wp_mail()` fonksiyonu başka bir eklenti veya dosya tarafından tanımlanmış: %s. Bu durum, e-postalarınızın GNN SMTPMail (Brevo veya Custom SMTP) üzerinden gitmesini ve loglanmasını engellemektedir. Lütfen çakışan e-posta/SMTP eklentilerini devre dışı bırakın."
 msgstr ""
 
-#: includes/class-gnn-smtpmail.php:249
+#: includes/class-gnn-smtpmail.php:253
 msgid "Brevo API Key is missing."
 msgstr ""
 
-#: includes/class-gnn-smtpmail.php:259
+#: includes/class-gnn-smtpmail.php:263
 msgid "Invalid or empty recipient email address."
 msgstr ""
 
-#: includes/class-gnn-smtpmail.php:416
+#: includes/class-gnn-smtpmail.php:430
 msgid "Brevo API error"
 msgstr ""
 
-#: includes/class-gnn-smtpmail.php:420
+#: includes/class-gnn-smtpmail.php:434
 msgid "Brevo API Error (HTTP %d): %s"
+msgstr ""
+
+#: includes/class-gnn-smtpmail.php:446
+msgid "Atlanan ekler: %s"
 msgstr ""
