@@ -4,9 +4,9 @@
   "status": "active",
   "mode": "Interactive",
   "preferred_language": "Turkish",
-  "timestamp": "2026-11-25T03:35:21+03:00",
+  "timestamp": "2026-11-25T03:48:00+03:00",
   "active_branch": "main",
-  "last_commit": "5ced8bb",
+  "last_commit": "9169828",
   "git_history_available": true,
   "worktree_status": "clean",
   "concurrency_lock": {
@@ -15,12 +15,9 @@
     "lock_acquired_at": null
   },
   "current_sprint": {
-    "sprint_id": "v1.6.3-ui-export",
+    "sprint_id": "v1.6.4-brevo-false-positive-fixes",
     "active_tasks": [
-      "FEAT-EXPORT",
-      "TASK-UI-01",
-      "TASK-UI-02",
-      "TASK-UI-03"
+      "TASK-BREVO-FP-01"
     ]
   },
   "tracked_memory_areas": {

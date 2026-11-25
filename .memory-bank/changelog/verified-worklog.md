@@ -31,6 +31,12 @@ This document tracks all completed modifications, releases, and validation resul
 
 ## 🚀 Recent Releases
 
+### v1.6.4 — Brevo False-Positive Elimination (2026-11-25)
+- Enforced `null !== $null` short-circuit respect and `Content-Type: text/plain` overrides in `pre_wp_mail_handler()`.
+- Verified JSON `messageId`/`messageIds` on HTTP `201`/`202` and logged `Message ID` plus any skipped/blocked attachment names.
+- Added shared `get_brevo_senders_status()` helper to eliminate false `Aktif` badges and silent empty-sender states across `Genel Bakış`, `Ayarlar`, and `E-posta Testi`.
+- Unified `is_wp_mail_conflict()` to prevent false-positive conflict notices when `get_wp_mail_source()` returns `''`; updated `languages/gnn-smtpmail.pot` (127 strings).
+
 ### v1.6.3 — Modern Card UI, SMTP Presets & Log Export (2026-11-25)
 - Unified all 4 admin screens (`Genel Bakış`, `Ayarlar`, `E-posta Testi`, `Loglar`) with tabbed navigation, card row layouts, and flow-safe `role="switch"` toggles.
 - Added `Genel Bakış` System Status summary (`GNN_SMTPMail_Logger::get_stats()`), one-click SMTP provider presets, dynamic auth fields, and Brevo sender refresh button.

@@ -7,7 +7,13 @@ This document logs active and historical bugs in the GNN SMTPMail repository.
 
 ## Resolved Bugs
 
-### 1. Updater `zipball_url` Fallback Rejected by Host Allowlist (v1.6.1)
+### 1. Brevo API False-Positive Delivery & Admin Status Checks (v1.6.4)
+- **Status:** Resolved
+- **Confidence:** Verified
+- **Issue:** `pre_wp_mail_handler()` ignored upstream `$null` short-circuits, accepted `201` without validating JSON `messageId`, silently dropped invalid/blocked attachments, and ignored `Content-Type: text/plain` overrides; admin pages reported `Aktif` based solely on non-empty API keys; `page_logs()` flagged an empty `get_wp_mail_source()` string as a plugin conflict.
+- **Resolution:** Added `null !== $null` short-circuit guard, `messageId`/`messageIds` validation (`201`/`202`), skipped attachment logging, `get_brevo_senders_status()` validation across admin pages, and unified `is_wp_mail_conflict()` check.
+
+### 2. Updater `zipball_url` Fallback Rejected by Host Allowlist (v1.6.1)
 - **Status:** Resolved
 - **Confidence:** Verified
 - **Issue:** `GNN_SMTPMail_Updater::get_remote_release()` fell back to `$body->zipball_url` (`api.github.com`) when no `.zip` asset existed, which was rejected by the HTTPS host allowlist.

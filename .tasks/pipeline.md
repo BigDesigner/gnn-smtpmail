@@ -32,6 +32,10 @@ This document manages active milestones, releases, and upcoming backlog items.
 
 ## 🚀 Recent Releases
 
+### v1.6.4 — Brevo False-Positive Elimination (2026-11-25)
+- Enforced `null !== $null` short-circuit check, `Content-Type: text/plain` override, JSON `messageId`/`messageIds` validation, and skipped attachment logging in `pre_wp_mail_handler()`.
+- Added shared `get_brevo_senders_status()` and `is_wp_mail_conflict()` helpers to remove false `Aktif` badges, silent empty-sender states, and empty-path conflict warnings; updated `.pot` (127 strings).
+
 ### v1.6.3 — Modern Card UI, SMTP Presets & Log Export (2026-11-25)
 - Added top tab navigation, `.gnn-card` / `.gnn-form-row` layout, and accessible `role="switch"` toggles (`AÇIK`/`KAPALI`) across all admin pages.
 - Added Overview stats summary, one-click SMTP provider presets, dynamic auth toggling, Brevo sender refresh button, and `HTML`/`Özel E-posta` test switches.
